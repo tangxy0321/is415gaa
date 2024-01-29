@@ -1,0 +1,9 @@
+---
+title: "Geospatial Journey 2024 Jan - Apr"
+listing: 
+  type: grid
+  exclude: 
+    id: "remove*"
+---
+
+This is for IS415 Geospatial Analysis and Applications. You will see all my work here.

@@ -1,0 +1,112 @@
+---
+title: "In-class Exercise 3: Network Constrained Kernel Density Estimation (NKDE)"
+format: 
+  html: 
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-line-numbers: true
+    code-copy: hover
+execute: 
+  eval: true
+  echo: true
+  freeze: auto
+---
+
+This exercise is obtained from [Chapter 7](https://r4gdsa.netlify.app/chap07.html).
+
+# Installing and importing packages
+
+```{r}
+pacman::p_load(sf, spNetwork, tmap, classInt, viridis, tidyverse)
+```
+
+# Data
+
+In this exercise the following datasets are used
+
+-   `Punggol_CC` which shows child care centres in Punggol planning area, in SVY21
+
+-   `Punggol_St` which shows the road network data of Punggol planning area, in SVY21
+
+```{r}
+network <- st_read(dsn = "../../data/geospatial",
+                   layer = "Punggol_St")
+childcare <- st_read(dsn = "../../data/geospatial",
+                     layer = "Punggol_CC")
+```
+
+# Visualising the Geospatial data
+
+`tmap_mode("view")` is the interactive map; `tmap_mode("plot")` gives the static map
+
+-   Polygon to be plotted before point and line
+
+-   road network data, remove walking path, cycling path if necessary
+
+```{r}
+tmap_mode("view")
+tm_shape(childcare) + 
+  tm_dots() +
+  tm_shape(network) + 
+  tm_lines()
+tmap_mode("plot")
+```
+
+## Prepare `lixels` object
+
+```{r}
+lixels <- lixelize_lines(network,
+                         # willingness of people to walk to a childcare centre or MRT station
+                         # bandwidth
+                         750,
+                         # mid-point of the distance
+                         mindist = 375)
+```
+
+## Generate line centre points
+
+```{r}
+samples <- lines_center(lixels)
+```
+
+```{r}
+densities <- nkde(network,
+                  events = childcare,
+                  w = rep(1, nrow(childcare)),
+                  samples = samples,
+                  ## important
+                  kernel_name = "quartic",
+                  bw = 300,
+                  ## important
+                  div = "bw",
+                  method = "simple",
+                  digits = 1,
+                  tol = 1,
+                  grid_shape = c(1,1),
+                  max_depth = 8,
+                  # aggregate events within 5m radius (faster calculation)
+                  agg = 5,
+                  sparse = TRUE,
+                  verbose = FALSE)
+```
+```{r}
+samples$density <- densities
+lixels$density <- densities
+```
+
+```{r}
+# rescaling to help the mapping
+samples$density <- samples$density*1000
+lixels$density <- lixels$density*1000
+```
+
+
+```{r}
+tmap_mode("view")
+tm_shape(lixels) + 
+  tm_lines(col="density") +
+tm_shape(childcare) +
+  tm_dots()
+tmap_mode("plot")
+```

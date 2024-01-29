@@ -1,0 +1,49 @@
+---
+title: "In-class Exercise 4: Spatial Weights and Applications: sf methods"
+format: 
+  html: 
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-line-numbers: true
+    code-copy: hover
+execute: 
+  eval: true
+  echo: true
+  freeze: auto
+---
+# Import packages
+
+```{r}
+pacman::p_load(sf, spdep, tmap, tidyverse, knitr, GWmodel)
+```
+
+```{r}
+hunan <- st_read(dsn = "../../data/geospatial",
+                 layer = "Hunan")
+hunan2012 <- read_csv("../../data/aspatial/Hunan_2012.csv")
+hunan <- left_join(hunan, hunan2012) %>%
+  select(1:4, 7,15)
+```
+
+## Working with Geographically Weighted Summary Statistics (GWSS)
+
+The `GWmodel` package only works with `sp` objects, so we need to transform `sf` into `sp` 
+
+```{r}
+hunan_sp <- hunan %>% 
+  as_Spatial()
+```
+
+-   `kernel`: similar to that in Spatial Point Pattern Analysis, smoothing out
+
+```{r}
+gwstat <- gwss(data = hunan_sp,
+               vars = "GDPPC",
+               bw = 6,
+               kernel = "bisquare",
+               adaptive = TRUE,
+               longlat = T)
+gwstat
+```
+

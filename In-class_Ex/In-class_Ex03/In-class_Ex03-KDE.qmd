@@ -1,0 +1,115 @@
+---
+title: "In-class Exercise 3: Kernel Density Estimation"
+format: 
+  html: 
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-line-numbers: true
+    code-copy: hover
+execute: 
+  eval: true
+  echo: true
+  freeze: auto
+---
+
+### Install `maptools`
+```{r}
+#| eval: false
+install.packages("maptools", repos = "https://packagemanager.posit.co/cran/2023-10-13")
+```
+
+```{r}
+pacman::p_load(maptools, sf, raster, spatstat, tidyverse)
+```
+
+```{r}
+childcare_sf <- st_read("../../data/geospatial/ChildCareServices.geojson") %>%
+  st_transform(crs = 3414)
+mpsz_sf <- st_read(dsn = "../../data/geospatial",
+                   layer = "MP14_SUBZONE_WEB_PL")
+```
+## Create `CoastalOutline`
+```{r}
+plot(mpsz_sf)
+```
+size of map is by default taking the entire `mpsz_sf` boundary -> appear small
+```{r}
+sg_sf <- mpsz_sf %>% 
+  st_union()
+plot(sg_sf)
+```
+
+# Geospatial data wrangling
+
+## Creating ppp objects (directly from sf)
+
+Not necessary to convert into Spatial -> sp -> pp (Textbook chapter 4.5.1 to 4.5.3)
+
+```{r}
+childcare_ppp <- as.ppp(childcare_sf)
+```
+
+Area unit not known -> package design
+
+```{r}
+summary(childcare_ppp)
+```
+
+## Handle duplicated data
+
+Check for duplicated data point
+
+```{r}
+any(duplicated(childcare_ppp))
+```
+
+Count number of co-indicence point
+```{r}
+multiplicity(childcare_ppp)
+```
+
+## Create `owin` object
+
+Like above, one can directly convert `sf` into `owin` (No need to convert `sf` ->`sp` -> `owin`)
+
+```{r}
+sg_owin <- as.owin(sg_sf)
+plot(sg_owin)
+```
+
+```{r}
+summary(sg_owin)
+```
+## Combine point event to owin object
+
+```{r}
+childcareSG_ppp = childcare_ppp[sg_owin]
+```
+
+## Extract planning area
+
+with sf
+```{r}
+pg <- mpsz_sf %>% 
+  filter(PLN_AREA_N == "PUNGGOL")
+tm <- mpsz_sf %>% 
+  filter(PLN_AREA_N=="TAMPINES")
+ck <- mpsz_sf %>% 
+  filter(PLN_AREA_N=="CHOA CHU KANG")
+jw <- mpsz_sf %>% 
+  filter(PLN_AREA_N=="JURONG WEST")
+```
+
+Plot target planning area
+
+-   `main` option gives the title for each subplot \(labelling purpose\)
+
+```{r}
+par(mfrow=c(2,2))
+plot(pg, main = "PUNGGOL")
+plot(tm, main = "TAMPINES")
+plot(ck, main = "CHOA CHU KANG")
+plot(jw, main = "JURONG WEST")
+```
+

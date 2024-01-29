@@ -1,0 +1,559 @@
+---
+title: "Hands-on Exercise 2: Choropleth Mapping with R"
+format: 
+  html: 
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-line-numbers: true
+    code-copy: hover
+execute: 
+  eval: true
+  echo: true
+  freeze: auto
+---
+
+# Getting Started
+
+This exercise focuses on the usage of `tmap` package, with the aid of functions from `sf` and `tidyverse`.
+
+Before starting, the above mentioned packages need to be installed through the following code.
+
+```{r}
+pacman::p_load(sf, tmap, tidyverse)
+```
+
+# Import data
+
+This exercise would be using back the dataset from the previous hands-on exercise, together with population distribution dataset from Department of Statistics Singapore, which is also known as SingStat.
+
+## Importing Master Plan 2014 data
+
+The `.shp` file could be imported using `st_read()` function from the `sf` package. This dataset is stored into the variable `mpsz`. The relative pathway is starting from directory storing the file `Hands-on_Ex02.qmd`.
+
+```{r}
+mpsz <- st_read("../../data/geospatial/MP14_SUBZONE_WEB_PL.shp")
+```
+
+```{r}
+mpsz
+```
+
+Looking at the content of `mpsz`, only the top 10 rows would be shown. This is because the data would display top 10 features, which also means the first 10 rows. \## Importing Population data The 2nd data file we have is of CSV format, thus it can be imported through `read_csv()` function from
+
+```{r}
+popdata <- read_csv("../../data/aspatial/respopagesexfa2011to2020.csv")
+popdata
+```
+
+# Data Preparation
+
+Now the population data for the year 2020 is extracted from the original population dataset stored in the variable `popdata`, it's stored as `popdata2020`.
+
+```{r}
+popdata2020 <- popdata %>%
+  filter(Time == 2020) %>%
+  group_by(PA, SZ, AG) %>%
+  summarise(`POP` = sum(`Pop`)) %>%
+  ungroup()%>%
+  pivot_wider(names_from=AG, 
+              values_from=POP) %>%
+  mutate(YOUNG = rowSums(.[3:6])
+         +rowSums(.[12])) %>%
+  mutate(`ECONOMY ACTIVE` = rowSums(.[7:11])+
+  rowSums(.[13:15]))%>%
+  mutate(`AGED`=rowSums(.[16:21])) %>%
+  mutate(`TOTAL`=rowSums(.[3:21])) %>%  
+  mutate(`DEPENDENCY` = (`YOUNG` + `AGED`)
+  /`ECONOMY ACTIVE`) %>%
+    select(`PA`, `SZ`, `YOUNG`, 
+         `ECONOMY ACTIVE`, `AGED`, 
+         `TOTAL`, `DEPENDENCY`)
+popdata2020
+```
+
+## Joining geospatial and aspatial data
+
+As the PA and SZ fields in `popdata2020` are made up of both upper and lower case characters while the corresponding field in `mpsz` contains only upper case characters, there is a need to convert PA and SZ fields in `popdata2020` into the same format as that in `mpsz`.
+
+```{r}
+popdata2020 <- popdata2020 %>%
+  mutate_at(.vars = vars(PA, SZ), 
+          .funs = list(toupper)) %>%
+  filter(`ECONOMY ACTIVE` > 0)
+popdata2020
+```
+
+After the conversion, the 2 datasets can finally be combined into a master dataset `mpsz_pop2020`.
+
+```{r}
+mpsz_pop2020 <- left_join(mpsz, popdata2020,
+                          by = c("SUBZONE_N" = "SZ"))
+```
+
+We are saving our newly created master dataset.
+
+```{r}
+write_rds(mpsz_pop2020,"../../data/rds/mpszpop2020.rds")
+```
+
+# Plotting with `tmap`
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+The `qtm()` function draws a cartographic standard choropleth map by default.
+
+=======
+The `qtm()` function draws a cartographic standard choropleth map by default.
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+The `qtm()` function draws a cartographic standard choropleth map by default.
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tmap_mode("plot")
+qtm(mpsz_pop2020, 
+    fill = "DEPENDENCY")
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+The `tmap` elements offer possibility of customisation.
+
+=======
+The `tmap` elements offer possibility of customisation.
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+The `tmap` elements offer possibility of customisation.
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tm_shape(mpsz_pop2020)+
+  tm_fill("DEPENDENCY", 
+          style = "quantile", 
+          palette = "Blues",
+          title = "Dependency ratio") +
+  tm_layout(main.title = "Distribution of Dependency Ratio by planning subzone",
+            main.title.position = "center",
+            main.title.size = 1.2,
+            legend.height = 0.45, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_borders(alpha = 0.5) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar() +
+  tm_grid(alpha =0.2) +
+  tm_credits("Source: Planning Sub-zone boundary from Urban Redevelopment Authorithy (URA)\n and Population data from Department of Statistics DOS", 
+             position = c("left", "bottom"))
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+A base map layer is required for the other elements to be applied on.
+
+=======
+A base map layer is required for the other elements to be applied on.
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+A base map layer is required for the other elements to be applied on.
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tm_shape(mpsz_pop2020) +
+  tm_polygons()
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+By inserting the column name into `tm_polygons()`, the map would be shaded accordingly with `YlOrRd` of ColorBrewer as the default colour scheme.
+
+=======
+By inserting the column name into `tm_polygons()`, the map would be shaded accordingly with `YlOrRd` of ColorBrewer as the default colour scheme.
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+By inserting the column name into `tm_polygons()`, the map would be shaded accordingly with `YlOrRd` of ColorBrewer as the default colour scheme.
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tm_shape(mpsz_pop2020)+
+  tm_polygons("DEPENDENCY")
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+Changing to `tm_fill()` would remove the borders completely
+
+=======
+Changing to `tm_fill()` would remove the borders completely
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+Changing to `tm_fill()` would remove the borders completely
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tm_shape(mpsz_pop2020)+
+  tm_fill("DEPENDENCY")
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+Using `tm_borders(lwd,alpha)` allows one to customise the borders shown for each district, with `lwd` manipulating the border line width and `alpha` targetting the line type.
+
+=======
+Using `tm_borders(lwd,alpha)` allows one to customise the borders shown for each district, with `lwd` manipulating the border line width and `alpha` targetting the line type.
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+Using `tm_borders(lwd,alpha)` allows one to customise the borders shown for each district, with `lwd` manipulating the border line width and `alpha` targetting the line type.
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tm_shape(mpsz_pop2020)+
+  tm_fill("DEPENDENCY") +
+  tm_borders(lwd = 0.1,  alpha = 1)
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+One would be able to utilise quantile data classification with 5 classes
+
+=======
+One would be able to utilise quantile data classification with 5 classes
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+One would be able to utilise quantile data classification with 5 classes
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tm_shape(mpsz_pop2020)+
+  tm_fill("DEPENDENCY",
+          n = 5,
+          style = "jenks") +
+  tm_borders(alpha = 0.5)
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+Or with even classification
+
+=======
+Or with even classification
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+Or with even classification
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tm_shape(mpsz_pop2020)+
+  tm_fill("DEPENDENCY",
+          n = 5,
+          style = "equal") +
+  tm_borders(alpha = 0.5)
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+Apart from the default classification methods, one can define the break points
+
+=======
+Apart from the default classification methods, one can define the break points
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+Apart from the default classification methods, one can define the break points
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+summary(mpsz_pop2020$DEPENDENCY)
+tm_shape(mpsz_pop2020)+
+  tm_fill("DEPENDENCY",
+          breaks = c(0, 0.60, 0.70, 0.80, 0.90, 1.00)) +
+  tm_borders(alpha = 0.5)
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+The break points in this case is a combination of quantiles, minimum, maximum and mean values. \# Colour schemes available One could define the colour scheme to be used for the categories. This is using blue sequential colour scheme, ordered by shades of the colour
+
+=======
+The break points in this case is a combination of quantiles, minimum, maximum and mean values.
+# Colour schemes available
+One could define the colour scheme to be used for the categories.
+This is using blue sequential colour scheme, ordered by shades of the colour
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+The break points in this case is a combination of quantiles, minimum, maximum and mean values. \# Colour schemes available One could define the colour scheme to be used for the categories. This is using blue sequential colour scheme, ordered by shades of the colour
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tm_shape(mpsz_pop2020)+
+  tm_fill("DEPENDENCY",
+          n = 6,
+          style = "quantile",
+          palette = "Blues") +
+  tm_borders(alpha = 0.5)
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+Green sequential colour scheme with inverse shade
+
+=======
+Green sequential colour scheme with inverse shade
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+Green sequential colour scheme with inverse shade
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tm_shape(mpsz_pop2020)+
+  tm_fill("DEPENDENCY",
+          style = "quantile",
+          palette = "-Greens") +
+  tm_borders(alpha = 0.5)
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+## Customising Map Legend
+
+Some legend options for consideration
+
+=======
+=======
+
+>>>>>>> 4757c24 (work (published again))
+## Customising Map Legend
+
+Some legend options for consideration
+<<<<<<< HEAD
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tm_shape(mpsz_pop2020)+
+  tm_fill("DEPENDENCY", 
+          style = "jenks", 
+          palette = "Blues", 
+          legend.hist = TRUE, 
+          legend.is.portrait = TRUE,
+          legend.hist.z = 0.1) +
+  tm_layout(main.title = "Distribution of Dependency Ratio by planning subzone \n(Jenks classification)",
+            main.title.position = "center",
+            main.title.size = 1,
+            legend.height = 0.45, 
+            legend.width = 0.35,
+            legend.outside = FALSE,
+            legend.position = c("right", "bottom"),
+            frame = FALSE) +
+  tm_borders(alpha = 0.5)
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+## Customising Map Layout
+
+This is how the `classic` style looks like.
+
+=======
+=======
+
+>>>>>>> 4757c24 (work (published again))
+## Customising Map Layout
+
+This is how the `classic` style looks like.
+<<<<<<< HEAD
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tm_shape(mpsz_pop2020)+
+  tm_fill("DEPENDENCY", 
+          style = "quantile", 
+          palette = "-Greens") +
+  tm_borders(alpha = 0.5) +
+  tmap_style("classic")
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+## Other elements
+
+Some elements that are not essential but good to have E.g. compass
+
+=======
+## Other elements
+Some elements that are not essential but good to have
+E.g. compass
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+## Other elements
+
+Some elements that are not essential but good to have E.g. compass
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tm_shape(mpsz_pop2020)+
+  tm_fill("DEPENDENCY", 
+          style = "quantile", 
+          palette = "Blues",
+          title = "No. of persons") +
+  tm_layout(main.title = "Distribution of Dependency Ratio \nby planning subzone",
+            main.title.position = "center",
+            main.title.size = 1.2,
+            legend.height = 0.45, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_borders(alpha = 0.5) +
+  tm_compass(type="8star", size = 2) +
+  tm_scale_bar(width = 0.15) +
+  tm_grid(lwd = 0.1, alpha = 0.2) +
+  tm_credits("Source: Planning Sub-zone boundary from Urban Redevelopment Authorithy (URA)\n and Population data from Department of Statistics DOS", 
+             position = c("left", "bottom"))
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+To return to the default style setting, the following code chunk is used.
+
+```{r}
+tmap_style("white")
+```
+
+# Multiple Choropleth maps
+
+There are 3 ways of plotting multiple maps at once \### 1. Assigning multiple values to at least one of the aesthetic arguments
+
+=======
+=======
+
+>>>>>>> 4757c24 (work (published again))
+To return to the default style setting, the following code chunk is used.
+
+```{r}
+tmap_style("white")
+```
+
+# Multiple Choropleth maps
+<<<<<<< HEAD
+There are 3 ways of plotting multiple maps at once
+### 1. Assigning multiple values to at least one of the aesthetic arguments
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+There are 3 ways of plotting multiple maps at once \### 1. Assigning multiple values to at least one of the aesthetic arguments
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tm_shape(mpsz_pop2020)+
+  tm_fill(c("YOUNG", "AGED"),
+          style = "equal", 
+          palette = "Blues") +
+  tm_layout(legend.position = c("right", "bottom")) +
+  tm_borders(alpha = 0.5) +
+  tmap_style("white")
+tm_shape(mpsz_pop2020)+ 
+  tm_polygons(c("DEPENDENCY","AGED"),
+          style = c("equal", "quantile"), 
+          palette = list("Blues","Greens")) +
+  tm_layout(legend.position = c("right", "bottom"))
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+### 2. Defining a group-by variable in tm_facets()
+
+=======
+### 2. Defining a group-by variable in tm_facets()
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+### 2. Defining a group-by variable in tm_facets()
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tm_shape(mpsz_pop2020) +
+  tm_fill("DEPENDENCY",
+          style = "quantile",
+          palette = "Blues",
+          thres.poly = 0) + 
+  tm_facets(by="REGION_N", 
+            free.coords=TRUE, 
+            drop.shapes=TRUE) +
+  tm_layout(legend.show = FALSE,
+            title.position = c("center", "center"), 
+            title.size = 20) +
+  tm_borders(alpha = 0.5)
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+### 3. Creating multiple stand-alone maps with tmap_arrange()
+
+=======
+### 3. Creating multiple stand-alone maps with tmap_arrange()
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+### 3. Creating multiple stand-alone maps with tmap_arrange()
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+youngmap <- tm_shape(mpsz_pop2020)+ 
+  tm_polygons("YOUNG", 
+              style = "quantile", 
+              palette = "Blues")
+
+agedmap <- tm_shape(mpsz_pop2020)+ 
+  tm_polygons("AGED", 
+              style = "quantile", 
+              palette = "Blues")
+
+tmap_arrange(youngmap, agedmap, asp=1, ncol=2)
+```
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+## Selection Criterion
+
+Set the criterion on the original dataset
+
+=======
+=======
+
+>>>>>>> 4757c24 (work (published again))
+## Selection Criterion
+
+Set the criterion on the original dataset
+<<<<<<< HEAD
+>>>>>>> b645483 (hands-on_ex02; fix bug on hands-on_ex01)
+=======
+
+>>>>>>> 4757c24 (work (published again))
+```{r}
+tm_shape(mpsz_pop2020[mpsz_pop2020$REGION_N=="CENTRAL REGION", ])+
+  tm_fill("DEPENDENCY", 
+          style = "quantile", 
+          palette = "Blues", 
+          legend.hist = TRUE, 
+          legend.is.portrait = TRUE,
+          legend.hist.z = 0.1) +
+  tm_layout(legend.outside = TRUE,
+            legend.height = 0.45, 
+            legend.width = 5.0,
+            legend.position = c("right", "bottom"),
+            frame = FALSE) +
+  tm_borders(alpha = 0.5)
+```

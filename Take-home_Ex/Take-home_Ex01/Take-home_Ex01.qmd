@@ -1,0 +1,188 @@
+---
+title: "Take-home Exercise 1: Application of Spatial Point Pattern Analysis on Grab Hailing Service in Singapore"
+format: 
+  html: 
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-line-numbers: true
+    code-copy: hover
+execute: 
+  eval: true
+  echo: true
+  freeze: auto
+author: "Tang Xin Yi"
+date: "17 Jan 2024"
+---
+
+# 1 Problem context
+
+This exercise is looking into discovering insights relevant to the geographical and spatial distribution of Grab hailing service locations in Singapore.
+
+In this exercise, the following packages are used.
+
+```{r}
+pacman::p_load(sf, tidyverse, tmap, spatstat, raster, maptools, spNetwork, classInt, viridis, arrow, lubridate)
+```
+
+# 2 Data
+
+## 2.1 Background of the datasets used
+
+The following datasets are used in this analysis exercise.
+
+-   `GrabPosisi`: Aspatial data
+
+-   `RoadMap`: from OpenStreetMap
+
+-   `Master Plan 2019 Subzone Boundary (No Sea)`  from Data.gov.sg
+
+## 2.2 Import data
+
+```{r}
+#| eval: false
+grab <- read_parquet("../../data/aspatial/GrabPosisi/part-00000-8bbff892-97d2-4011-9961-703e38972569.c000.snappy.parquet")
+
+roadmap <- st_read(dsn = "../../data/geospatial/malaysia-singapore-brunei-latest-free.shp",
+                   layer = "gis_osm_roads_free_1")
+
+mp19 <- st_read("../../data/geospatial/MasterPlan2019SubzoneBoundaryNoSeaKML.kml")
+```
+From below, `grab$pingtimestamp` is not in the correct data type (it is in int class)
+
+```{r}
+#| eval: false
+head(grab)
+grab$pingtimestamp = as_datetime(grab$pingtimestamp)
+```
+Now the `pingtimestamp` is in the correct data type `POSIXct` which represents datetime in tibble
+
+```{r}
+#| eval: false
+head(grab)
+```
+There are Z dimensions in `mp19` multipolygon Z, drop Z dimensions to keep the multipolygons 
+
+```{r}
+#| eval: false
+mp19 <- st_zm(mp19$geometry, drop = TRUE, what = "ZM")
+```
+The tibble data.frame is using coordinate system `WGS 84`, but we want to use the data in `SVY21`
+```{r}
+#| eval: false
+st_crs(mp19)
+```
+```{r}
+mp19 <- st_transform(mp19, crs = 3414)
+```
+
+```{r}
+#| eval: false
+head(roadmap)
+st_crs(roadmap)
+```
+`roadmap` has a similar problem as `mp19`, the coordinate system needs to be changed to `SVY 21`
+```{r}
+#| eval: false
+roadmap <- st_transform(roadmap, crs = 3414)
+head(roadmap)
+```
+
+## 2.3 Prepare required Geographical data layers
+
+This exercise needs the following geographical data layers
+
+1. Grab taxi location points either by origins or destinations
+
+2. Road layer within Singapore excluding outer islands
+
+3. Singapore boundary layer excluding outer islands
+
+### 2.3.1 Get Grab taxi origin and destination layer
+
+Get the origin tibble data.frame
+
+```{r}
+#| eval: false
+trip_origin <- grab %>% 
+  # group by trip id
+  group_by(trj_id) %>% 
+  # sort: ascending by default
+  arrange(pingtimestamp, .by_group = FALSE) %>% 
+  # get 1st row
+  filter(row_number()==1) %>% 
+  mutate(weekday = wday(pingtimestamp,
+                        label = TRUE,
+                        abbr = TRUE),
+         start_hr = factor(hour(pingtimestamp)),
+         day = factor(mday(pingtimestamp)))
+```
+
+Get the destination tibble data.frame
+
+```{r}
+#| eval: false
+trip_dest <- grab %>% 
+  group_by(trj_id) %>% 
+  arrange(desc(pingtimestamp), .by_group = FALSE) %>% 
+  filter(row_number()==1) %>% 
+  mutate(weekday = wday(pingtimestamp,
+                        label = TRUE,
+                        abbr = TRUE),
+         end_hr = factor(hour(pingtimestamp)),
+         day = factor(mday(pingtimestamp)))
+```
+
+The extracted data layers are written into `rds` files for easier reference later.
+
+```{r}
+#| eval: false
+write_rds(trip_origin, "../../data/rds/trip_origin.rds")
+write_rds(trip_dest, "../../data/rds/trip_dest.rds")
+```
+
+### 2.3.3 Get Singapore boundary layer
+
+This part is using `mp19` and `roadmap`
+
+Do a quick plot of the union to get the boundary layer
+
+```{r}
+#| eval: false
+plot(st_union(mp19))
+```
+Save the boundary layer into RDS file
+
+```{r}
+#| eval: false
+write_rds(st_union(mp19), "../../data/rds/sg_bount.rds")
+```
+
+### 2.3.2 Get Road layer within Singapore
+
+Overlap the 2 dataframe to get only roads for Singapore
+
+```{r}
+#| eval: false
+road_sg <- st_intersection(roadmap, mp19)
+plot(road_sg)
+```
+
+Zoom in to see the roads via ID
+
+```{r}
+#| eval: false
+tmap_mode("view")
+tm_shape(road_sg)+
+  tm_lines()
+tmap_mode("plot")
+```
+Extract out the road layer
+
+```{r}
+write_rds(road_sg, "../../data/rds/road_sg.rds")
+```
+
+# 3 Kernel Density Estimation
+
+# 4 Network-constrained Kernel Density Estimation
