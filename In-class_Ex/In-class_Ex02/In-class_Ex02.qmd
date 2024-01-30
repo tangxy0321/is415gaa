@@ -42,7 +42,7 @@ pacman::p_load("arrow","lubridate","tidyverse","tmap","sf")
 `read_parquet(filePath)`: function to read parquet files, though the commented out line is preferred, it don't work on macOS.
 
 `as_datetime(df$fieldName)`: function from `lubridate`, convert integers into datetime
->>>>>>> 591255a (Commit asked to be done before rebasing can work)
+
 ```{r}
 #| eval: false
 df <- read_parquet("data/GrabPosisi/part-00000-8bbff892-97d2-4011-9961-703e38972569.c000.snappy.parquet")
@@ -51,27 +51,18 @@ df <- read_parquet("data/GrabPosisi/part-00000-8bbff892-97d2-4011-9961-703e38972
 df$pingtimestamp <- as_datetime(df_1$pingtimestamp)
 write_rds(df, "data/rds/part0.rds")
 ```
-<<<<<<< HEAD
 
 The field `pingtimestamp` is now in POSIXct format (tibble time format).
 
 # 1.3 Extract Trip starting location
 
-=======
 The field `pingtimestamp` is now in POSIXct format (tibble time format).
 
 # 1.3 Extract Trip starting location
->>>>>>> 591255a (Commit asked to be done before rebasing can work)
 *Use tidyverse function to do the extraction*
 
 `wday()`: function from `lubridate` to get the weekday of the imported datetime
-
-<<<<<<< HEAD
 `factor()`: function that extracts out
-=======
-`factor()`: function that extracts out 
->>>>>>> 591255a (Commit asked to be done before rebasing can work)
-
 `arrange(column, .by_group = FALSE)`: sort ascending according to timestamp
 
 ```{r}
@@ -94,10 +85,6 @@ trip_starting <- df %>%
 
 Using the previous code chunk with some modification
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 591255a (Commit asked to be done before rebasing can work)
 ```{r}
 #| eval: false
 trip_destination <- df %>%
@@ -119,13 +106,15 @@ For own use, save in RDS; other wise, in requested format.
 ```{r}
 #| eval: false
 #| echo: false
-write_rds(trip_starting, "data/rds/trip_starting.rds")
-write_rds(trip_destination, "data/rds/trip_destination.rds")
+write_rds(trip_starting, "../../data/rds/trip_starting.rds")
+write_rds(trip_destination, "../../data/rds/trip_destination.rds")
 ```
 
 ## Import data
 
 ```{r}
-origin_df <- read_rds("data/rds/trip_starting.rds")
-destination_df <- read_rds("data/rds/trip_destination.rds")
+#| eval: false
+#| echo: false
+origin_df <- read_rds("../../data/rds/trip_starting.rds")
+destination_df <- read_rds("../../data/rds/trip_destination.rds")
 ```
