@@ -486,6 +486,18 @@ hunan.gi <- cbind(hunan, as.matrix(gi.fixed)) %>%
   rename(gstat_fixed = as.matrix.gi.fixed.)
 ```
 
+#### Gi statistics with adaptive distance
+
+```{r}
+fips <- order(hunan$County)
+gi.adaptive <- localG(hunan$GDPPC, knn_lw)
+hunan.gi <- cbind(hunan.gi, as.matrix(gi.adaptive)) %>%
+  rename(gstat_adaptive = as.matrix.gi.adaptive.)
+```
+
+
+### Step 3: Mapping Gi Statistics
+
 Map Gi statistics with fixed distance
 
 ```{r}
@@ -498,15 +510,26 @@ Gimap <-tm_shape(hunan.gi) +
           title = "local Gi") +
   tm_borders(alpha = 0.5)
 
-tmap_arrange(gdppc, Gimap, asp=1, ncol=2)
+tmap_arrange(gdppc, 
+             Gimap, 
+             asp = 1, 
+             ncol = 2)
 ```
 
-#### Gi statistics with adaptive distance
+Map Gi statistics with adaptive distance
 
 ```{r}
+gdppc<- qtm(hunan, "GDPPC")
 
+Gimap <- tm_shape(hunan.gi) + 
+  tm_fill(col = "gstat_adaptive", 
+          style = "pretty", 
+          palette="-RdBu", 
+          title = "local Gi") + 
+  tm_borders(alpha = 0.5)
+
+tmap_arrange(gdppc, 
+             Gimap, 
+             asp=1, 
+             ncol=2)
 ```
-
-
-### Step 3: Mapping Gi Statistics
-
