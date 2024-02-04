@@ -76,6 +76,7 @@ st_crs(mp19)
 
 ```{r}
 mp19 <- st_transform(mp19, crs = 3414)
+head(mp19)
 ```
 
 ```{r}
@@ -116,10 +117,11 @@ trip_origin <- grab %>%
                         label = TRUE,
                         abbr = TRUE),
          start_hr = factor(hour(pingtimestamp)),
-         day = factor(mday(pingtimestamp)),
-         x = 6378.1 * cos(rawlat) * cos(rawlng),
-         y = 6378.1 * cos(rawlat) * sin(rawlng))
+         day = factor(mday(pingtimestamp)))
 ```
+
+
+
 
 Get the destination tibble data.frame
 
@@ -134,9 +136,7 @@ trip_dest <- grab %>%
                         label = TRUE,
                         abbr = TRUE),
          end_hr = factor(hour(pingtimestamp)),
-         day = factor(mday(pingtimestamp)),
-         x = 6378.1 * cos(rawlat) * cos(rawlng),
-         y = 6378.1 * cos(rawlat) * sin(rawlng))
+         day = factor(mday(pingtimestamp)))
 ```
 
 The extracted data layers are written into `rds` files for easier reference later.
@@ -163,6 +163,7 @@ lengths(mp19)
 ```{r}
 mp19main <- subset(mp19, lengths(mp19) <= 3 )
 plot(st_union(mp19main))
+summary(mp19main)
 ```
 
 Save the boundary layer into RDS file
@@ -183,10 +184,9 @@ road_sg <- st_intersection(roadmap, mp19main)
 Zoom in to see the roads via ID
 
 ```{r}
-tmap_mode("view")
+tmap_mode("plot")
 tm_shape(road_sg)+
   tm_lines()
-tmap_mode("plot")
 ```
 
 Extract out the road layer
@@ -217,24 +217,32 @@ According to the steps in In-class Exercises 3, the tibble needs to be wrangled.
 
 `sf` is preferred, convert to `sf`
 
+Upon investigation, the window size of the `trip_origin` and `sg_boun` differs too much.
+
+With reference to this [page](https://rstudio-pubs-static.s3.amazonaws.com/19879_7e13ab80d5ed416c8e235bd6bb93cf3e.html), the lat-long values are converted into SVY21 XY coordinates. 
+
 ```{r}
 class(trip_origin)
 class(trip_dest)
-class(road)
 class(sg_boun)
 
-trip_origin_sf <- st_as_sf(trip_origin, coords = c("rawlng","rawlat"), crs = 3414)
-trip_dest_sf <- st_as_sf(trip_dest, coords = c("rawlng","rawlat"), crs = 3414)
+# setting existing coordinate as lat-long system
+trip_origin_sp_dec <- SpatialPoints(coords = cbind(trip_origin$rawlng, trip_origin$rawlat),
+                                    proj4string = CRS("+proj=longlat"))
+trip_origin_sp_svy <- spTransform(trip_origin_sp_dec,
+                                  CRS("+init=epsg:3414"))
 
-st_crs(trip_origin_sf)
-st_crs(trip_dest_sf)
+trip_dest_sp_dec <- SpatialPoints(coords = cbind(trip_dest$rawlng, trip_dest$rawlat), 
+                                  proj4string = CRS("+proj=longlat"))
+trip_dest_sp_svy <- spTransform(trip_dest_sp_dec,
+                                CRS("+init=epsg:3414"))
 ```
 Create `ppp` object from the `sf` objects
 
 ```{r}
-trip_origin_ppp <- as.ppp(trip_origin_sf)
+trip_origin_ppp <- as(trip_origin_sp_svy, "ppp")
 summary(trip_origin_ppp)
-trip_dest_ppp <- as.ppp(trip_dest_sf)
+trip_dest_ppp <- as(trip_dest_sp_svy,"ppp")
 summary(trip_dest_ppp)
 ```
 Check na values
@@ -260,50 +268,37 @@ sum(multiplicity(trip_dest_ppp) > 1)
 
 Converting `sg_boun` into `owin` object
 
-
 ```{r}
-# adjust owin
-bbox_tripOrigin <- st_bbox(trip_origin_sf)
-xrange_tripOrigin <- c(bbox_tripOrigin["xmin"],bbox_tripOrigin["xmax"])
-yrange_tripOrigin <- c(bbox_tripOrigin["ymin"],bbox_tripOrigin["ymax"])
-
 sg_owin <- as.owin(sg_boun)
-
-new_sg_owin <- rescale(sg_owin, 200,"units")
-plot(new_sg_owin)
-summary(new_sg_owin)
-```
-
-```{r}
-Window(sg_boun,
-       xrange = xrange_tripOrigin,
-       yrange = yrange_tripOrigin)
-```
-
-Yet the window size is different from that of point event, adjust the window size
-
-```{r}
-
+plot(sg_owin)
+summary(sg_owin)
 ```
 
 Combine `trip_dest_ppp` and `trip_origin_ppp` to `sg_owin`
 
 ```{r}
-trip_originSG_ppp <- trip_origin_ppp[adjusted_owin]
-summary(trip_originSG_ppp)
-trip_destSG_ppp <- trip_dest_ppp[adjusted_owin]
+trip_originSG_ppp <- trip_origin_ppp[sg_owin]
+trip_destSG_ppp <- trip_dest_ppp[sg_owin]
 ```
 
 ## 3.2 Calculation
 
+Auto bandwidth with different kernel function for `trip_origin`
+
 ```{r}
-kde_trip_originSG_bw <- density(trip_originSG_ppp,
+kde_trip_originSG_G <- density(trip_originSG_ppp,
                                 sigma = bw.diggle,
                                 edge = TRUE,
                                 kernel = "gaussian")
-plot(kde_trip_originSG_bw)
-```
+plot(kde_trip_originSG_G)
 
+kde_trip_originSG_Q <- density(trip_originSG_ppp,
+                                sigma = bw.diggle,
+                                edge = TRUE,
+                                kernel = "quartic")
+plot(kde_trip_originSG_Q)
+```
+Most number of trips begin at the east side of Singapore
 
 # 4 Network-constrained Kernel Density Estimation
 
