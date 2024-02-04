@@ -41,7 +41,6 @@ The following datasets are used in this analysis exercise.
 ## 2.2 Import data
 
 ```{r}
-
 grab <- read_parquet("../../data/aspatial/GrabPosisi/part-00000-8bbff892-97d2-4011-9961-703e38972569.c000.snappy.parquet")
 
 roadmap <- st_read(dsn = "../../data/geospatial/malaysia-singapore-brunei-latest-free.shp",
@@ -117,10 +116,14 @@ trip_origin <- grab %>%
                         label = TRUE,
                         abbr = TRUE),
          start_hr = factor(hour(pingtimestamp)),
-         day = factor(mday(pingtimestamp)))
+         day = factor(mday(pingtimestamp)),
+         x = 6378.1 * cos(rawlat) * cos(rawlng),
+         y = 6378.1 * cos(rawlat) * sin(rawlng))
 ```
 
 Get the destination tibble data.frame
+
+Converting `rawlat` and `rawlng` with formula provided in this [StackOverflow tread](https://stackoverflow.com/questions/1185408/converting-from-longitude-latitude-to-cartesian-coordinates)
 
 ```{r}
 trip_dest <- grab %>% 
@@ -131,14 +134,15 @@ trip_dest <- grab %>%
                         label = TRUE,
                         abbr = TRUE),
          end_hr = factor(hour(pingtimestamp)),
-         day = factor(mday(pingtimestamp)))
+         day = factor(mday(pingtimestamp)),
+         x = 6378.1 * cos(rawlat) * cos(rawlng),
+         y = 6378.1 * cos(rawlat) * sin(rawlng))
 ```
 
 The extracted data layers are written into `rds` files for easier reference later.
 
 ```{r}
 #| eval: false
-#| echo: false
 write_rds(trip_origin, "../../data/rds/trip_origin.rds")
 write_rds(trip_dest, "../../data/rds/trip_dest.rds")
 ```
@@ -149,16 +153,23 @@ This part is using `mp19` and `roadmap`
 
 Do a quick plot of the union to get the boundary layer
 
+Use of `subset()` function credited to `Anonymous Calc` from [Piazza](https://piazza.com/class/lqua3egki6w3oi/post/48)
+
 ```{r}
-plot(st_union(mp19))
+lengths(mp19)
+```
+
+
+```{r}
+mp19main <- subset(mp19, lengths(mp19) <= 3 )
+plot(st_union(mp19main))
 ```
 
 Save the boundary layer into RDS file
 
 ```{r}
-#| echo: false
 #| eval: false
-write_rds(st_union(mp19), "../../data/rds/sg_bount.rds")
+write_rds(st_union(mp19main), "../../data/rds/sg_bount.rds")
 ```
 
 ### 2.3.2 Get Road layer within Singapore
@@ -166,13 +177,12 @@ write_rds(st_union(mp19), "../../data/rds/sg_bount.rds")
 Overlap the 2 dataframe to get only roads for Singapore
 
 ```{r}
-road_sg <- st_intersection(roadmap, mp19)
+road_sg <- st_intersection(roadmap, mp19main)
 ```
 
 Zoom in to see the roads via ID
 
 ```{r}
-#| eval: false
 tmap_mode("view")
 tm_shape(road_sg)+
   tm_lines()
@@ -182,11 +192,119 @@ tmap_mode("plot")
 Extract out the road layer
 
 ```{r}
-#| echo: false
 #| eval: false
 write_rds(road_sg, "../../data/rds/road_sg.rds")
 ```
 
 # 3 Kernel Density Estimation
 
+From here on, the rds files would be used instead of the original data files.
+
+```{r}
+road <- read_rds("../../data/rds/road_sg.rds")
+sg_boun <- read_rds("../../data/rds/sg_bount.rds")
+trip_origin <- read_rds("../../data/rds/trip_origin.rds")
+trip_dest <- read_rds("../../data/rds/trip_dest.rds")
+
+st_crs(sg_boun)
+st_crs(trip_origin)
+st_crs(trip_dest)
+```
+
+According to the steps in In-class Exercises 3, the tibble needs to be wrangled.
+
+## 3.1 Geospatial data wrangling
+
+`sf` is preferred, convert to `sf`
+
+```{r}
+class(trip_origin)
+class(trip_dest)
+class(road)
+class(sg_boun)
+
+trip_origin_sf <- st_as_sf(trip_origin, coords = c("rawlng","rawlat"), crs = 3414)
+trip_dest_sf <- st_as_sf(trip_dest, coords = c("rawlng","rawlat"), crs = 3414)
+
+st_crs(trip_origin_sf)
+st_crs(trip_dest_sf)
+```
+Create `ppp` object from the `sf` objects
+
+```{r}
+trip_origin_ppp <- as.ppp(trip_origin_sf)
+summary(trip_origin_ppp)
+trip_dest_ppp <- as.ppp(trip_dest_sf)
+summary(trip_dest_ppp)
+```
+Check na values
+
+```{r}
+sum(is.na(trip_origin_ppp))
+sum(is.na(trip_dest_ppp))
+```
+
+Handle duplicated datapoints
+
+```{r}
+any(duplicated(trip_origin_ppp))
+any(duplicated(trip_dest_ppp))
+```
+
+Count the number of co-incidence points
+
+```{r}
+sum(multiplicity(trip_origin_ppp) > 1)
+sum(multiplicity(trip_dest_ppp) > 1)
+```
+
+Converting `sg_boun` into `owin` object
+
+
+```{r}
+# adjust owin
+bbox_tripOrigin <- st_bbox(trip_origin_sf)
+xrange_tripOrigin <- c(bbox_tripOrigin["xmin"],bbox_tripOrigin["xmax"])
+yrange_tripOrigin <- c(bbox_tripOrigin["ymin"],bbox_tripOrigin["ymax"])
+
+sg_owin <- as.owin(sg_boun)
+
+new_sg_owin <- rescale(sg_owin, 200,"units")
+plot(new_sg_owin)
+summary(new_sg_owin)
+```
+
+```{r}
+Window(sg_boun,
+       xrange = xrange_tripOrigin,
+       yrange = yrange_tripOrigin)
+```
+
+Yet the window size is different from that of point event, adjust the window size
+
+```{r}
+
+```
+
+Combine `trip_dest_ppp` and `trip_origin_ppp` to `sg_owin`
+
+```{r}
+trip_originSG_ppp <- trip_origin_ppp[adjusted_owin]
+summary(trip_originSG_ppp)
+trip_destSG_ppp <- trip_dest_ppp[adjusted_owin]
+```
+
+## 3.2 Calculation
+
+```{r}
+kde_trip_originSG_bw <- density(trip_originSG_ppp,
+                                sigma = bw.diggle,
+                                edge = TRUE,
+                                kernel = "gaussian")
+plot(kde_trip_originSG_bw)
+```
+
+
 # 4 Network-constrained Kernel Density Estimation
+
+
