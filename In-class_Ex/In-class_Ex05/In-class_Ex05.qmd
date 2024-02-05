@@ -1,0 +1,125 @@
+---
+title: "In-class Exercise 5: Global and Local Measures of Spatial Autocorrelation - sfdep methods"
+format: 
+  html: 
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-line-numbers: true
+    code-copy: hover
+execute: 
+  eval: true
+  echo: true
+  freeze: auto
+---
+
+# Getting Started
+
+:::{.callout-important}
+#### Do it yourself
+Using the strps learned in previous lesson, install packages `sf`
+:::
+
+```{r}
+pacman::p_load(sf, sfdep, tmap, tidyverse)
+```
+
+Import geospatial data
+
+```{r}
+hunan2012 <- read.csv("data/aspatial/Hunan_2012.csv")
+hunan_GDPPC <- read.csv("data/aspatial/Hunan_GDPPC.csv")
+hunan <- st_read(dsn = "data/geospatial",
+                 layer = "Hunan")
+hunan %>% 
+  st_transform(crs = 3414)
+```
+Combine both dataframes by `left_join`
+
+-   left table must be `sf` object
+
+```{r}
+hunan_GDPPC <- left_join(hunan,
+                         hunan2012) %>% 
+  select(1:4,7,15)
+hunan_GDPPC1 <- left_join(hunan,
+                         hunan2012)
+```
+
+Plot choropleth map 
+
+```{r}
+tmap_mode("plot")
+tm_shape(hunan_GDPPC)+
+  tm_fill("GDPPC",
+          style = "quantile",
+          palette = "Blues",
+          title = "GDPPC")+
+  tm_layout(main.title = "Distribution of GDP per capita by county, Hunan Province",
+            main.title.position = "center",
+            main.title.size = 1.2,
+            legend.title.size = 0.45,
+            legend.height = 0.45 ,
+            legend.width = 0.35,
+            frame = TRUE)+
+  tm_borders(alpha = 0.5)+
+  tm_compass(type = "8star",
+             size = 2)+
+  tm_scale_bar()+
+  tm_grid(alpha = 0.2)
+```
+
+## Step 1: Derive contiguity weight: Queen's method
+
+```{r}
+wm_q <- hunan_GDPPC %>% 
+  mutate(nb = st_contiguity(geometry),
+         wt = st_weights(nb,
+                         style = "W"),
+         # derived columns to be put before column 1
+         .before = 1)
+```
+
+Compute global Moran's I
+
+```{r}
+moranI <- global_moran(wm_q$GDPPC,
+                       wm_q$nb,
+                       wm_q$wt)
+```
+
+Use the test to get Moran's I statistics
+
+```{r}
+global_moran_test(wm_q$GDPPC,
+                  wm_q$nb,
+                  wm_q$wt)
+```
+
+Now doing permutation version of Moran's I test: more simulation to confirm representive of the I statistics result
+
+-   prove that the result produced is reproducible, and hence is stable
+
+-   number of simulation will affect result (especially with large dataset)
+
+        -   reduce number of simulations when dataset is large, to 99 or even 49
+        
+        -   use `nsim = 99` to test speed of device (to get the approriate number of simulation)
+
+```{r}
+set.seed(1234)
+
+global_moran_perm(wm_q$GDPPC,
+                  wm_q$nb,
+                  wm_q$wt,
+                  nsim = 99)
+```
+When explaining statistical evidence:
+
+-   p-value > or < alpha value
+
+    -   (not) enough statistical evidence to reject null hypothesis that spatial distribution is (independent from spatial)
+    
+-   Moran's I statistics value > or = or < 0
+
+    -   clustering, outlier, random
