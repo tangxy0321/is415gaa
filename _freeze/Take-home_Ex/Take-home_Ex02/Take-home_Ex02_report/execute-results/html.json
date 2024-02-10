@@ -1,0 +1,15 @@
+{
+  "hash": "5f2c8a0fc12493b622338857efb9b880",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Report\"\nformat: \n  html: \n    code-fold: true\n    code-summary: \"Show the code\"\n    code-overflow: wrap\n    code-line-numbers: true\n    code-copy: hover\nexecute: \n  eval: true\n  echo: true\n  freeze: auto\n---\n\n::: {.cell}\n\n```{.r .cell-code}\npacman::p_load(sf, tidyverse, tmap, sfdep)\n```\n:::",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "hash": "b2fcfb7fb4012f58b5ef1fa3b4fe84c2",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Geospatial Data Wrangling\"\nformat: \n  html: \n    code-fold: true\n    code-summary: \"Show the code\"\n    code-overflow: wrap\n    code-line-numbers: true\n    code-copy: hover\nexecute: \n  eval: true\n  echo: true\n  freeze: auto\n---\n\n::: {.cell}\n\n```{.r .cell-code}\npacman::p_load(sf, tidyverse, tmap, sfdep)\n```\n:::\n\n\n# Import Data\n\nThe following datasets are used in this exercise.\n\n-   `TAIWAN_VILLAGE_2020`, a geospatial data of village boundary of Taiwan. It is in ESRI shapefile format. The data is in Taiwan Geographic Coordinate System TWD97. (Source: [data.gov.tw](https://data.gov.tw/en/datasets/130549))\n\n    -   Version 1091030\n\n-   `Dengue_Daily.csv`, an aspatial data of reported dengue cases in Taiwan since 1998.\n\n\n::: {.cell}\n\n:::\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

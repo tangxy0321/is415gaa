@@ -418,5 +418,19 @@
     "title": "In-class Exercise 2:",
     "section": "Import data",
     "text": "Import data"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/Take-home_Ex02.html",
+    "href": "Take-home_Ex/Take-home_Ex02/Take-home_Ex02.html",
+    "title": "Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Geospatial Data Wrangling",
+    "section": "",
+    "text": "Show the code\npacman::p_load(sf, tidyverse, tmap, sfdep)\n\n\n\nImport Data\nThe following datasets are used in this exercise.\n\nTAIWAN_VILLAGE_2020, a geospatial data of village boundary of Taiwan. It is in ESRI shapefile format. The data is in Taiwan Geographic Coordinate System TWD97. (Source: data.gov.tw)\n\nVersion 1091030\n\nDengue_Daily.csv, an aspatial data of reported dengue cases in Taiwan since 1998."
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/Take-home_Ex02_report.html",
+    "href": "Take-home_Ex/Take-home_Ex02/Take-home_Ex02_report.html",
+    "title": "Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Report",
+    "section": "",
+    "text": "Show the code\npacman::p_load(sf, tidyverse, tmap, sfdep)"
   }
 ]
