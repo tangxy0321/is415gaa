@@ -1,0 +1,33 @@
+---
+title: "Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Geospatial Data Wrangling"
+format: 
+  html: 
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-line-numbers: true
+    code-copy: hover
+execute: 
+  eval: true
+  echo: true
+  freeze: auto
+---
+
+```{r}
+pacman::p_load(sf, tidyverse, tmap, sfdep)
+```
+
+# Import Data
+
+The following datasets are used in this exercise.
+
+-   `TAIWAN_VILLAGE_2020`, a geospatial data of village boundary of Taiwan. It is in ESRI shapefile format. The data is in Taiwan Geographic Coordinate System TWD97. (Source: [data.gov.tw](https://data.gov.tw/en/datasets/130549))
+
+    -   Version 1091030
+
+-   `Dengue_Daily.csv`, an aspatial data of reported dengue cases in Taiwan since 1998.
+
+```{r}
+
+```
+
