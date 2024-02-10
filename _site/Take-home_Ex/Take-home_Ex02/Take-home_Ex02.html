@@ -217,6 +217,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#import-data" id="toc-import-data" class="nav-link active" data-scroll-target="#import-data">Import Data</a></li>
+  <li><a href="#preparing-data-for-analysis" id="toc-preparing-data-for-analysis" class="nav-link" data-scroll-target="#preparing-data-for-analysis">Preparing data for analysis</a>
+  <ul class="collapse">
+  <li><a href="#study-area-preparation" id="toc-study-area-preparation" class="nav-link" data-scroll-target="#study-area-preparation">Study area preparation</a></li>
+  <li><a href="#dengue-fever-layer-preparation" id="toc-dengue-fever-layer-preparation" class="nav-link" data-scroll-target="#dengue-fever-layer-preparation">Dengue fever layer preparation</a></li>
+  <li><a href="#get-the-derived-dengue-layer" id="toc-get-the-derived-dengue-layer" class="nav-link" data-scroll-target="#get-the-derived-dengue-layer">Get the derived dengue layer</a></li>
+  </ul></li>
   </ul>
 </nav>
 </nav>
@@ -249,21 +255,164 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, tidyverse, tmap, sfdep)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, tidyverse, tmap, sfdep, lubridate)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="import-data" class="level1">
 <h1>Import Data</h1>
 <p>The following datasets are used in this exercise.</p>
 <ul>
-<li><p><code>TAIWAN_VILLAGE_2020</code>, a geospatial data of village boundary of Taiwan. It is in ESRI shapefile format. The data is in Taiwan Geographic Coordinate System TWD97. (Source: <a href="https://data.gov.tw/en/datasets/130549">data.gov.tw</a>)</p>
-<ul>
-<li>Version 1091030</li>
-</ul></li>
+<li><p><code>TAIWAN_VILLAGE_2020</code>, a geospatial data of village boundary of Taiwan. It is in ESRI shapefile format. The data is in Taiwan Geographic Coordinate System TWD97.</p></li>
 <li><p><code>Dengue_Daily.csv</code>, an aspatial data of reported dengue cases in Taiwan since 1998.</p></li>
 </ul>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>tainan <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"../../data/geospatial"</span>,</span>
+<span id="cb2-2"><a href="#cb2-2"></a>                  <span class="at">layer =</span> <span class="st">"TAINAN_VILLAGE"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `TAINAN_VILLAGE' from data source 
+  `/Users/tangtang/Desktop/IS415 Geospatial Analytics and Applications/practice/is415gaa/data/geospatial' 
+  using driver `ESRI Shapefile'
+Simple feature collection with 649 features and 10 fields
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: 120.0269 ymin: 22.88751 xmax: 120.6563 ymax: 23.41374
+Geodetic CRS:  TWD97</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>dengue <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../../data/aspatial/Dengue_Daily.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 106861 Columns: 26
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr  (23): 個案研判日, 性別, 年齡層, 居住縣市, 居住鄉鎮, 居住村里, 最小統計區, 最小統計區中心點X, 最小統計區中心點Y, 一級...
+dbl   (1): 確定病例數
+date  (2): 發病日, 通報日
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+</div>
+</section>
+<section id="preparing-data-for-analysis" class="level1">
+<h1>Preparing data for analysis</h1>
+<section id="study-area-preparation" class="level2">
+<h2 class="anchored" data-anchor-id="study-area-preparation">Study area preparation</h2>
+<p>According to the task objective given, this exercise requested for counties labelled D01, D02, D04, D06, D07, D08, D32 and D39</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>tainan <span class="ot">&lt;-</span> tainan[tainan<span class="sc">$</span>TOWNID <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"D01"</span>, <span class="st">"D02"</span>,<span class="st">"D04"</span>,<span class="st">"D06"</span>,<span class="st">"D07"</span>,<span class="st">"D08"</span>,<span class="st">"D32"</span>,<span class="st">"D39"</span>),]</span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="fu">plot</span>(tainan)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: plotting the first 9 out of 10 attributes; use max.plot = 10 to plot
+all</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex02_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="dengue-fever-layer-preparation" class="level2">
+<h2 class="anchored" data-anchor-id="dengue-fever-layer-preparation">Dengue fever layer preparation</h2>
+<p>This exercise requires dengue cases in Tainan, Taiwan. The original tibble is filtered by the condition where county name is equals to Tainan, and saved back to the same variable name.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>dengue <span class="ot">&lt;-</span> dengue <span class="sc">%&gt;%</span> </span>
+<span id="cb8-2"><a href="#cb8-2"></a>  <span class="fu">mutate</span>(年 <span class="ot">=</span> <span class="fu">factor</span>(<span class="fu">year</span>(通報日)),</span>
+<span id="cb8-3"><a href="#cb8-3"></a>         周 <span class="ot">=</span> <span class="fu">week</span>(通報日)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-4"><a href="#cb8-4"></a>  <span class="fu">filter</span>(居住縣市 <span class="sc">==</span> <span class="st">"台南市"</span>,</span>
+<span id="cb8-5"><a href="#cb8-5"></a>         年 <span class="sc">==</span> <span class="st">"2023"</span>,</span>
+<span id="cb8-6"><a href="#cb8-6"></a>         周 <span class="sc">&gt;=</span> <span class="dv">31</span>,</span>
+<span id="cb8-7"><a href="#cb8-7"></a>         周 <span class="sc">&lt;=</span> <span class="dv">50</span>) </span>
+<span id="cb8-8"><a href="#cb8-8"></a>  </span>
+<span id="cb8-9"><a href="#cb8-9"></a>dengue</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 20,789 × 28
+   發病日     個案研判日 通報日     性別  年齡層 居住縣市 居住鄉鎮 居住村里
+   &lt;date&gt;     &lt;chr&gt;      &lt;date&gt;     &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;   
+ 1 2023-07-20 2023/08/03 2023-08-03 男    65-69  台南市   永康區   崑山里  
+ 2 2023-07-20 2023/08/01 2023-08-01 男    5-9    台南市   永康區   復華里  
+ 3 2023-07-22 2023/08/04 2023-08-04 女    10-14  台南市   永康區   復華里  
+ 4 2023-07-22 2023/07/30 2023-07-30 男    50-54  台南市   永康區   正強里  
+ 5 2023-07-24 2023/07/31 2023-07-31 男    10-14  台南市   東區     大智里  
+ 6 2023-07-24 2023/07/31 2023-07-31 女    50-54  台南市   北區     None    
+ 7 2023-07-24 2023/07/31 2023-07-30 男    65-69  台南市   北區     永祥里  
+ 8 2023-07-25 2023/07/30 2023-07-30 女    55-59  台南市   永康區   三合里  
+ 9 2023-07-25 2023/08/01 2023-07-30 女    65-69  台南市   南區     大成里  
+10 2023-07-25 2023/08/01 2023-07-30 男    40-44  台南市   北區     大港里  
+# ℹ 20,779 more rows
+# ℹ 20 more variables: 最小統計區 &lt;chr&gt;, 最小統計區中心點X &lt;chr&gt;,
+#   最小統計區中心點Y &lt;chr&gt;, 一級統計區 &lt;chr&gt;, 二級統計區 &lt;chr&gt;,
+#   感染縣市 &lt;chr&gt;, 感染鄉鎮 &lt;chr&gt;, 感染村里 &lt;chr&gt;, 是否境外移入 &lt;chr&gt;,
+#   感染國家 &lt;chr&gt;, 確定病例數 &lt;dbl&gt;, 居住村里代碼 &lt;chr&gt;, 感染村里代碼 &lt;chr&gt;,
+#   血清型 &lt;chr&gt;, 內政部居住縣市代碼 &lt;chr&gt;, 內政部居住鄉鎮代碼 &lt;chr&gt;,
+#   內政部感染縣市代碼 &lt;chr&gt;, 內政部感染鄉鎮代碼 &lt;chr&gt;, 年 &lt;fct&gt;, 周 &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<p>Convert <code>dengue</code> to <code>sf</code> object such that the object would be able to be projected to <code>TWD97</code>. Before conversion, check that there is no missing value in coordinates</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="fu">sum</span>(dengue<span class="sc">$</span>最小統計區中心點X <span class="sc">==</span> <span class="st">"None"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 10</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="fu">sum</span>(dengue<span class="sc">$</span>最小統計區中心點Y <span class="sc">==</span> <span class="st">"None"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 10</code></pre>
+</div>
+</div>
+<p>Drop those with None values: Currently could not find a effective way to fill in, so to not obstruct the conversion into a <code>sf</code> object, I decided to drop the rows with “None” values for the coordinates columns.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>dengue <span class="ot">&lt;-</span> dengue <span class="sc">%&gt;%</span> </span>
+<span id="cb14-2"><a href="#cb14-2"></a>  <span class="fu">filter</span>(最小統計區中心點X <span class="sc">!=</span> <span class="st">"None"</span>,</span>
+<span id="cb14-3"><a href="#cb14-3"></a>         最小統計區中心點Y <span class="sc">!=</span> <span class="st">"None"</span>)</span>
+<span id="cb14-4"><a href="#cb14-4"></a><span class="fu">sum</span>(dengue<span class="sc">$</span>最小統計區中心點X <span class="sc">==</span> <span class="st">"None"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a><span class="fu">sum</span>(dengue<span class="sc">$</span>最小統計區中心點Y <span class="sc">==</span> <span class="st">"None"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0</code></pre>
+</div>
+</div>
+<p>Convert <code>dengue</code> to <code>sf</code> object and assign projected coordinate system</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a>dengue <span class="ot">&lt;-</span> <span class="fu">st_as_sf</span>(dengue,</span>
+<span id="cb18-2"><a href="#cb18-2"></a>                   <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"最小統計區中心點X"</span>,<span class="st">"最小統計區中心點Y"</span>),</span>
+<span id="cb18-3"><a href="#cb18-3"></a>                   <span class="at">crs =</span> <span class="dv">3824</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="get-the-derived-dengue-layer" class="level2">
+<h2 class="anchored" data-anchor-id="get-the-derived-dengue-layer">Get the derived dengue layer</h2>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

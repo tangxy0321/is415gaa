@@ -424,7 +424,7 @@
     "href": "Take-home_Ex/Take-home_Ex02/Take-home_Ex02.html",
     "title": "Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Geospatial Data Wrangling",
     "section": "",
-    "text": "Show the code\npacman::p_load(sf, tidyverse, tmap, sfdep)\n\n\n\nImport Data\nThe following datasets are used in this exercise.\n\nTAIWAN_VILLAGE_2020, a geospatial data of village boundary of Taiwan. It is in ESRI shapefile format. The data is in Taiwan Geographic Coordinate System TWD97. (Source: data.gov.tw)\n\nVersion 1091030\n\nDengue_Daily.csv, an aspatial data of reported dengue cases in Taiwan since 1998."
+    "text": "Show the code\npacman::p_load(sf, tidyverse, tmap, sfdep, lubridate)"
   },
   {
     "objectID": "Take-home_Ex/Take-home_Ex02/Take-home_Ex02_report.html",
@@ -432,5 +432,40 @@
     "title": "Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Report",
     "section": "",
     "text": "Show the code\npacman::p_load(sf, tidyverse, tmap, sfdep)"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/Take-home_Ex02.html#study-area-preparation",
+    "href": "Take-home_Ex/Take-home_Ex02/Take-home_Ex02.html#study-area-preparation",
+    "title": "Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Geospatial Data Wrangling",
+    "section": "Study area preparation",
+    "text": "Study area preparation\nAccording to the task objective given, this exercise requested for counties labelled D01, D02, D04, D06, D07, D08, D32 and D39\n\n\nShow the code\ntainan &lt;- tainan[tainan$TOWNID %in% c(\"D01\", \"D02\",\"D04\",\"D06\",\"D07\",\"D08\",\"D32\",\"D39\"),]\nplot(tainan)\n\n\nWarning: plotting the first 9 out of 10 attributes; use max.plot = 10 to plot\nall"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/Take-home_Ex02.html#dengue-fever-layer-preparation",
+    "href": "Take-home_Ex/Take-home_Ex02/Take-home_Ex02.html#dengue-fever-layer-preparation",
+    "title": "Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Geospatial Data Wrangling",
+    "section": "Dengue fever layer preparation",
+    "text": "Dengue fever layer preparation\nThis exercise requires dengue cases in Tainan, Taiwan. The original tibble is filtered by the condition where county name is equals to Tainan, and saved back to the same variable name.\n\n\nShow the code\ndengue &lt;- dengue %&gt;% \n  mutate(年 = factor(year(通報日)),\n         周 = week(通報日)) %&gt;% \n  filter(居住縣市 == \"台南市\",\n         年 == \"2023\",\n         周 &gt;= 31,\n         周 &lt;= 50) \n  \ndengue\n\n\n# A tibble: 20,789 × 28\n   發病日     個案研判日 通報日     性別  年齡層 居住縣市 居住鄉鎮 居住村里\n   &lt;date&gt;     &lt;chr&gt;      &lt;date&gt;     &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;   \n 1 2023-07-20 2023/08/03 2023-08-03 男    65-69  台南市   永康區   崑山里  \n 2 2023-07-20 2023/08/01 2023-08-01 男    5-9    台南市   永康區   復華里  \n 3 2023-07-22 2023/08/04 2023-08-04 女    10-14  台南市   永康區   復華里  \n 4 2023-07-22 2023/07/30 2023-07-30 男    50-54  台南市   永康區   正強里  \n 5 2023-07-24 2023/07/31 2023-07-31 男    10-14  台南市   東區     大智里  \n 6 2023-07-24 2023/07/31 2023-07-31 女    50-54  台南市   北區     None    \n 7 2023-07-24 2023/07/31 2023-07-30 男    65-69  台南市   北區     永祥里  \n 8 2023-07-25 2023/07/30 2023-07-30 女    55-59  台南市   永康區   三合里  \n 9 2023-07-25 2023/08/01 2023-07-30 女    65-69  台南市   南區     大成里  \n10 2023-07-25 2023/08/01 2023-07-30 男    40-44  台南市   北區     大港里  \n# ℹ 20,779 more rows\n# ℹ 20 more variables: 最小統計區 &lt;chr&gt;, 最小統計區中心點X &lt;chr&gt;,\n#   最小統計區中心點Y &lt;chr&gt;, 一級統計區 &lt;chr&gt;, 二級統計區 &lt;chr&gt;,\n#   感染縣市 &lt;chr&gt;, 感染鄉鎮 &lt;chr&gt;, 感染村里 &lt;chr&gt;, 是否境外移入 &lt;chr&gt;,\n#   感染國家 &lt;chr&gt;, 確定病例數 &lt;dbl&gt;, 居住村里代碼 &lt;chr&gt;, 感染村里代碼 &lt;chr&gt;,\n#   血清型 &lt;chr&gt;, 內政部居住縣市代碼 &lt;chr&gt;, 內政部居住鄉鎮代碼 &lt;chr&gt;,\n#   內政部感染縣市代碼 &lt;chr&gt;, 內政部感染鄉鎮代碼 &lt;chr&gt;, 年 &lt;fct&gt;, 周 &lt;dbl&gt;\n\n\nConvert dengue to sf object such that the object would be able to be projected to TWD97. Before conversion, check that there is no missing value in coordinates\n\n\nShow the code\nsum(dengue$最小統計區中心點X == \"None\")\n\n\n[1] 10\n\n\nShow the code\nsum(dengue$最小統計區中心點Y == \"None\")\n\n\n[1] 10\n\n\nDrop those with None values: Currently could not find a effective way to fill in, so to not obstruct the conversion into a sf object, I decided to drop the rows with “None” values for the coordinates columns.\n\n\nShow the code\ndengue &lt;- dengue %&gt;% \n  filter(最小統計區中心點X != \"None\",\n         最小統計區中心點Y != \"None\")\nsum(dengue$最小統計區中心點X == \"None\")\n\n\n[1] 0\n\n\nShow the code\nsum(dengue$最小統計區中心點Y == \"None\")\n\n\n[1] 0\n\n\nConvert dengue to sf object and assign projected coordinate system\n\n\nShow the code\ndengue &lt;- st_as_sf(dengue,\n                   coords = c(\"最小統計區中心點X\",\"最小統計區中心點Y\"),\n                   crs = 3824)"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/Take-home_Ex02.html#get-the-derived-dengue-layer",
+    "href": "Take-home_Ex/Take-home_Ex02/Take-home_Ex02.html#get-the-derived-dengue-layer",
+    "title": "Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Geospatial Data Wrangling",
+    "section": "Get the derived dengue layer",
+    "text": "Get the derived dengue layer"
+  },
+  {
+    "objectID": "data/geospatial/TAINAN_README.html",
+    "href": "data/geospatial/TAINAN_README.html",
+    "title": "TAIWAN_2020",
+    "section": "",
+    "text": "TAIWAN_2020\nSOURCE: 內政部國土測繪中心 版權所有\nhttps://whgis.nlsc.gov.tw/English/5-1Files.aspx\n鄉鎮市區界線(TWD97經緯度)1090324 2020/03/27 10:44:13 \n村(里)界(TWD97經緯度)1090324 2020/03/27 10:41:47"
+  },
+  {
+    "objectID": "data/geospatial/TAINAN_VILLAGE.html",
+    "href": "data/geospatial/TAINAN_VILLAGE.html",
+    "title": "IS415-GAA",
+    "section": "",
+    "text": "&lt;!DOCTYPE qgis PUBLIC ‘http://mrcc.com/qgis.dtd’ ‘SYSTEM’&gt;     dataset\n\n\n       GEOGCRS[“TWD97”,DATUM[“Taiwan Datum 1997”,ELLIPSOID[“GRS 1980”,6378137,298.257222101,LENGTHUNIT[“metre”,1]]],PRIMEM[“Greenwich”,0,ANGLEUNIT[“degree”,0.0174532925199433]],CS[ellipsoidal,2],AXIS[“geodetic latitude (Lat)”,north,ORDER[1],ANGLEUNIT[“degree”,0.0174532925199433]],AXIS[“geodetic longitude (Lon)”,east,ORDER[2],ANGLEUNIT[“degree”,0.0174532925199433]],USAGE[SCOPE[“Horizontal component of 3D system.”],AREA[“Taiwan, Republic of China - onshore and offshore - Taiwan Island, Penghu (Pescadores) Islands.”],BBOX[17.36,114.32,26.96,123.61]],ID[“EPSG”,3824]] +proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs 27230 3824 EPSG:3824 TWD97 longlat EPSG:7019 true"
   }
 ]
