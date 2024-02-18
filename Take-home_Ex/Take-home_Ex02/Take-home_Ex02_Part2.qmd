@@ -39,7 +39,7 @@ I then matched the `tainan` dataset with the `dengue_grp` dataset, left joined u
 
 ```{r}
 dengue_grp <- dengue %>%
-  group_by(感染村里) %>%
+  group_by(感染村里, 周) %>%
   summarise(num_dengue_cases=n()) %>%
   st_drop_geometry()
 
@@ -50,7 +50,23 @@ tainan_dengue <- left_join(tainan, dengue_grp,
 
 tainan_dengue$num_dengue_cases <- tainan_dengue$num_dengue_cases %>%
   replace_na(0)
-tainan_dengue
+tainan_dengue_s3 <- as_spacetime(tainan_dengue, .loc_col = "VILLNAME", .time_col = "周")
+tainan_dengue_s3
 ```
+# Global Spatial Autocorrelation Analysis
+
+This exercise expected the `sfdep` methods taught in [In-class Exercise 5]("In-class_Ex/In-class_Ex05/In-class_Ex05.html") to derive the various statistic values and explain them.
+
+Derive contiguity weights with Queen's method
+```{r}
+wm_q <- tainan_dengue %>% 
+  mutate(nb = st_contiguity(geometry),
+         wt = st_weights(nb,
+                         style = "W"),
+         .before = 1)
+wm_q
+```
+# Local Spatial Autocorrelation Analysis
 
 
+# Emerging Hotspot Analysis

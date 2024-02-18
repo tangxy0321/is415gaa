@@ -217,6 +217,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#get-the-derived-dengue-layer" id="toc-get-the-derived-dengue-layer" class="nav-link active" data-scroll-target="#get-the-derived-dengue-layer">Get the derived dengue layer</a></li>
+  <li><a href="#global-spatial-autocorrelation-analysis" id="toc-global-spatial-autocorrelation-analysis" class="nav-link" data-scroll-target="#global-spatial-autocorrelation-analysis">Global Spatial Autocorrelation Analysis</a></li>
+  <li><a href="#local-spatial-autocorrelation-analysis" id="toc-local-spatial-autocorrelation-analysis" class="nav-link" data-scroll-target="#local-spatial-autocorrelation-analysis">Local Spatial Autocorrelation Analysis</a></li>
+  <li><a href="#emerging-hotspot-analysis" id="toc-emerging-hotspot-analysis" class="nav-link" data-scroll-target="#emerging-hotspot-analysis">Emerging Hotspot Analysis</a></li>
   </ul>
 </nav>
 </nav>
@@ -288,68 +291,1858 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>dengue_grp <span class="ot">&lt;-</span> dengue <span class="sc">%&gt;%</span></span>
-<span id="cb5-2"><a href="#cb5-2"></a>  <span class="fu">group_by</span>(感染村里) <span class="sc">%&gt;%</span></span>
+<span id="cb5-2"><a href="#cb5-2"></a>  <span class="fu">group_by</span>(感染村里, 周) <span class="sc">%&gt;%</span></span>
 <span id="cb5-3"><a href="#cb5-3"></a>  <span class="fu">summarise</span>(<span class="at">num_dengue_cases=</span><span class="fu">n</span>()) <span class="sc">%&gt;%</span></span>
-<span id="cb5-4"><a href="#cb5-4"></a>  <span class="fu">st_drop_geometry</span>()</span>
-<span id="cb5-5"><a href="#cb5-5"></a></span>
-<span id="cb5-6"><a href="#cb5-6"></a>dengue_grp</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-4"><a href="#cb5-4"></a>  <span class="fu">st_drop_geometry</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 345 × 2
-   感染村里 num_dengue_cases
- * &lt;chr&gt;               &lt;int&gt;
- 1 None                17734
- 2 一甲里                  9
- 3 七甲里                  6
- 4 三仙里                  1
- 5 三合里                  8
- 6 三舍里                  4
- 7 上崙里                  6
- 8 下湖里                  3
- 9 下營里                  1
-10 中坑里                  2
-# ℹ 335 more rows</code></pre>
+<div class="cell-output cell-output-stderr">
+<pre><code>`summarise()` has grouped output by '感染村里'. You can override using the
+`.groups` argument.</code></pre>
 </div>
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>tainan_dengue <span class="ot">&lt;-</span> <span class="fu">left_join</span>(tainan, dengue_grp,</span>
-<span id="cb7-2"><a href="#cb7-2"></a>                           <span class="at">by =</span> <span class="fu">join_by</span>(VILLNAME <span class="sc">==</span> 感染村里))</span>
-<span id="cb7-3"><a href="#cb7-3"></a></span>
-<span id="cb7-4"><a href="#cb7-4"></a>tainan_dengue<span class="sc">$</span>num_dengue_cases <span class="ot">&lt;-</span> tainan_dengue<span class="sc">$</span>num_dengue_cases <span class="sc">%&gt;%</span></span>
-<span id="cb7-5"><a href="#cb7-5"></a>  <span class="fu">replace_na</span>(<span class="dv">0</span>)</span>
-<span id="cb7-6"><a href="#cb7-6"></a>tainan_dengue</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>dengue_grp</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Simple feature collection with 258 features and 11 fields
+<pre><code># A tibble: 1,264 × 3
+# Groups:   感染村里 [345]
+   感染村里    周 num_dengue_cases
+ * &lt;chr&gt;    &lt;dbl&gt;            &lt;int&gt;
+ 1 None        32              362
+ 2 None        33              419
+ 3 None        34              727
+ 4 None        35             1141
+ 5 None        36             1824
+ 6 None        37             1892
+ 7 None        38             1783
+ 8 None        39             2222
+ 9 None        40             1757
+10 None        41             1393
+# ℹ 1,254 more rows</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>tainan_dengue <span class="ot">&lt;-</span> <span class="fu">left_join</span>(tainan, dengue_grp,</span>
+<span id="cb9-2"><a href="#cb9-2"></a>                           <span class="at">by =</span> <span class="fu">join_by</span>(VILLNAME <span class="sc">==</span> 感染村里))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in sf_column %in% names(g): Detected an unexpected many-to-many relationship between `x` and `y`.
+ℹ Row 2 of `x` matches multiple rows in `y`.
+ℹ Row 668 of `y` matches multiple rows in `x`.
+ℹ If a many-to-many relationship is expected, set `relationship =
+  "many-to-many"` to silence this warning.</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a>tainan_dengue<span class="sc">$</span>num_dengue_cases <span class="ot">&lt;-</span> tainan_dengue<span class="sc">$</span>num_dengue_cases <span class="sc">%&gt;%</span></span>
+<span id="cb11-2"><a href="#cb11-2"></a>  <span class="fu">replace_na</span>(<span class="dv">0</span>)</span>
+<span id="cb11-3"><a href="#cb11-3"></a>tainan_dengue_s3 <span class="ot">&lt;-</span> <span class="fu">as_spacetime</span>(tainan_dengue, <span class="at">.loc_col =</span> <span class="st">"VILLNAME"</span>, <span class="at">.time_col =</span> <span class="st">"周"</span>)</span>
+<span id="cb11-4"><a href="#cb11-4"></a>tainan_dengue_s3</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>spacetime ────
+Context:`data`
+258 locations `VILLNAME`
+19 time periods `周`
+── data context ────────────────────────────────────────────────────────────────</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       VILLCODE COUNTYNAME TOWNNAME VILLNAME         VILLENG COUNTYID
+1   67000350032     臺南市   安南區   青草里    Qingcao Vil.        D
+2   67000270011     臺南市   仁德區   保安里     Bao'an Vil.        D
+3   67000270011     臺南市   仁德區   保安里     Bao'an Vil.        D
+4   67000270011     臺南市   仁德區   保安里     Bao'an Vil.        D
+5   67000370005     臺南市   中西區   赤嵌里    Chihkan Vil.        D
+6   67000370005     臺南市   中西區   赤嵌里    Chihkan Vil.        D
+7   67000370005     臺南市   中西區   赤嵌里    Chihkan Vil.        D
+8   67000370005     臺南市   中西區   赤嵌里    Chihkan Vil.        D
+9   67000370005     臺南市   中西區   赤嵌里    Chihkan Vil.        D
+10  67000330004     臺南市     南區   大成里    Dacheng Vil.        D
+11  67000330004     臺南市     南區   大成里    Dacheng Vil.        D
+12  67000330004     臺南市     南區   大成里    Dacheng Vil.        D
+13  67000330004     臺南市     南區   大成里    Dacheng Vil.        D
+14  67000350028     臺南市   安南區   城北里   Chengbei Vil.        D
+15  67000350030     臺南市   安南區   城南里   Chengnan Vil.        D
+16  67000370009     臺南市   中西區   法華里      Fahua Vil.        D
+17  67000370009     臺南市   中西區   法華里      Fahua Vil.        D
+18  67000370009     臺南市   中西區   法華里      Fahua Vil.        D
+19  67000350017     臺南市   安南區   海南里     Hainan Vil.        D
+20  67000350017     臺南市   安南區   海南里     Hainan Vil.        D
+21  67000350049     臺南市   安南區   國安里     Guo'an Vil.        D
+22  67000350018     臺南市   安南區   溪心里      Xixin Vil.        D
+23  67000350018     臺南市   安南區   溪心里      Xixin Vil.        D
+24  67000350018     臺南市   安南區   溪心里      Xixin Vil.        D
+25  67000350018     臺南市   安南區   溪心里      Xixin Vil.        D
+26  67000350020     臺南市   安南區   淵東里   Yuandong Vil.        D
+27  67000350020     臺南市   安南區   淵東里   Yuandong Vil.        D
+28  67000350020     臺南市   安南區   淵東里   Yuandong Vil.        D
+29  67000350029     臺南市   安南區   城中里 Chengzhong Vil.        D
+30  67000350027     臺南市   安南區   城東里  Chengdong Vil.        D
+31  67000350026     臺南市   安南區   學東里    Xuedong Vil.        D
+32  67000350026     臺南市   安南區   學東里    Xuedong Vil.        D
+33  67000310013     臺南市   永康區   東灣里    Dongwan Vil.        D
+34  67000310013     臺南市   永康區   東灣里    Dongwan Vil.        D
+35  67000310013     臺南市   永康區   東灣里    Dongwan Vil.        D
+36  67000310013     臺南市   永康區   東灣里    Dongwan Vil.        D
+37  67000310015     臺南市   永康區   南灣里     Nanwan Vil.        D
+38  67000310015     臺南市   永康區   南灣里     Nanwan Vil.        D
+39  67000310015     臺南市   永康區   南灣里     Nanwan Vil.        D
+40  67000310016     臺南市   永康區   崑山里    Kunshan Vil.        D
+41  67000310016     臺南市   永康區   崑山里    Kunshan Vil.        D
+42  67000310016     臺南市   永康區   崑山里    Kunshan Vil.        D
+43  67000310016     臺南市   永康區   崑山里    Kunshan Vil.        D
+44  67000310016     臺南市   永康區   崑山里    Kunshan Vil.        D
+45  67000310012     臺南市   永康區   大灣里      Dawan Vil.        D
+46  67000310012     臺南市   永康區   大灣里      Dawan Vil.        D
+47  67000310012     臺南市   永康區   大灣里      Dawan Vil.        D
+48  67000310012     臺南市   永康區   大灣里      Dawan Vil.        D
+49  67000310001     臺南市   永康區   五王里     Wuwang Vil.        D
+50  67000310001     臺南市   永康區   五王里     Wuwang Vil.        D
+51  67000310001     臺南市   永康區   五王里     Wuwang Vil.        D
+52  67000310001     臺南市   永康區   五王里     Wuwang Vil.        D
+53  67000310001     臺南市   永康區   五王里     Wuwang Vil.        D
+54  67000310001     臺南市   永康區   五王里     Wuwang Vil.        D
+55  67000310034     臺南市   永康區   安康里     Ankang Vil.        D
+56  67000310034     臺南市   永康區   安康里     Ankang Vil.        D
+57  67000310034     臺南市   永康區   安康里     Ankang Vil.        D
+58  67000310034     臺南市   永康區   安康里     Ankang Vil.        D
+59  67000310034     臺南市   永康區   安康里     Ankang Vil.        D
+60  67000310035     臺南市   永康區   西橋里     Xiqiao Vil.        D
+61  67000310035     臺南市   永康區   西橋里     Xiqiao Vil.        D
+62  67000310035     臺南市   永康區   西橋里     Xiqiao Vil.        D
+63  67000310035     臺南市   永康區   西橋里     Xiqiao Vil.        D
+64  67000310002     臺南市   永康區   網寮里   Wangliao Vil.        D
+65  67000310002     臺南市   永康區   網寮里   Wangliao Vil.        D
+66  67000310002     臺南市   永康區   網寮里   Wangliao Vil.        D
+67  67000310002     臺南市   永康區   網寮里   Wangliao Vil.        D
+68  67000310002     臺南市   永康區   網寮里   Wangliao Vil.        D
+69  67000310005     臺南市   永康區   大橋里     Daqiao Vil.        D
+70  67000310005     臺南市   永康區   大橋里     Daqiao Vil.        D
+71  67000310005     臺南市   永康區   大橋里     Daqiao Vil.        D
+72  67000310005     臺南市   永康區   大橋里     Daqiao Vil.        D
+73  67000310005     臺南市   永康區   大橋里     Daqiao Vil.        D
+74  67000310005     臺南市   永康區   大橋里     Daqiao Vil.        D
+75  67000310033     臺南市   永康區   東橋里   Dongqiao Vil.        D
+76  67000310033     臺南市   永康區   東橋里   Dongqiao Vil.        D
+77  67000310033     臺南市   永康區   東橋里   Dongqiao Vil.        D
+78  67000310033     臺南市   永康區   東橋里   Dongqiao Vil.        D
+79  67000310033     臺南市   永康區   東橋里   Dongqiao Vil.        D
+80  67000310007     臺南市   永康區   烏竹里      Wuzhu Vil.        D
+81  67000310006     臺南市   永康區   王行里   Wangxing Vil.        D
+82  67000320003     臺南市     東區   大智里      Dazhi Vil.        D
+83  67000320003     臺南市     東區   大智里      Dazhi Vil.        D
+84  67000320003     臺南市     東區   大智里      Dazhi Vil.        D
+85  67000320003     臺南市     東區   大智里      Dazhi Vil.        D
+86  67000320041     臺南市     東區   崇文里   Chongwen Vil.        D
+87  67000320041     臺南市     東區   崇文里   Chongwen Vil.        D
+88  67000320041     臺南市     東區   崇文里   Chongwen Vil.        D
+89  67000320041     臺南市     東區   崇文里   Chongwen Vil.        D
+90  67000320035     臺南市     東區   崇成里 Chongcheng Vil.        D
+91  67000320035     臺南市     東區   崇成里 Chongcheng Vil.        D
+92  67000320035     臺南市     東區   崇成里 Chongcheng Vil.        D
+93  67000320012     臺南市     東區   崇明里  Chongming Vil.        D
+94  67000320012     臺南市     東區   崇明里  Chongming Vil.        D
+95  67000320012     臺南市     東區   崇明里  Chongming Vil.        D
+96  67000320012     臺南市     東區   崇明里  Chongming Vil.        D
+97  67000320028     臺南市     東區   大福里       Dafu Vil.        D
+98  67000320028     臺南市     東區   大福里       Dafu Vil.        D
+99  67000320032     臺南市     東區   崇德里    Chongde Vil.        D
+100 67000320032     臺南市     東區   崇德里    Chongde Vil.        D
+101 67000320032     臺南市     東區   崇德里    Chongde Vil.        D
+102 67000320032     臺南市     東區   崇德里    Chongde Vil.        D
+103 67000320032     臺南市     東區   崇德里    Chongde Vil.        D
+104 67000320016     臺南市     東區   大德里       Dade Vil.        D
+105 67000320004     臺南市     東區   崇學里   Chongxue Vil.        D
+106 67000320004     臺南市     東區   崇學里   Chongxue Vil.        D
+107 67000320004     臺南市     東區   崇學里   Chongxue Vil.        D
+108 67000320014     臺南市     東區   和平里     Heping Vil.        D
+109 67000320014     臺南市     東區   和平里     Heping Vil.        D
+110 67000320014     臺南市     東區   和平里     Heping Vil.        D
+111 67000320014     臺南市     東區   和平里     Heping Vil.        D
+112 67000320014     臺南市     東區   和平里     Heping Vil.        D
+113 67000320019     臺南市     東區   崇善里  Chongshan Vil.        D
+114 67000320019     臺南市     東區   崇善里  Chongshan Vil.        D
+115 67000320019     臺南市     東區   崇善里  Chongshan Vil.        D
+116 67000320019     臺南市     東區   崇善里  Chongshan Vil.        D
+117 67000320015     臺南市     東區   路東里     Ludong Vil.        D
+118 67000320025     臺南市     東區   虎尾里      Huwei Vil.        D
+119 67000320025     臺南市     東區   虎尾里      Huwei Vil.        D
+120 67000320025     臺南市     東區   虎尾里      Huwei Vil.        D
+121 67000320025     臺南市     東區   虎尾里      Huwei Vil.        D
+122 67000320025     臺南市     東區   虎尾里      Huwei Vil.        D
+123 67000320029     臺南市     東區   忠孝里  Zhongxiao Vil.        D
+124 67000320029     臺南市     東區   忠孝里  Zhongxiao Vil.        D
+125 67000320029     臺南市     東區   忠孝里  Zhongxiao Vil.        D
+126 67000320043     臺南市     東區   裕聖里    Yusheng Vil.        D
+127 67000320043     臺南市     東區   裕聖里    Yusheng Vil.        D
+128 67000320043     臺南市     東區   裕聖里    Yusheng Vil.        D
+129 67000320040     臺南市     東區   崇信里   Chongxin Vil.        D
+130 67000320040     臺南市     東區   崇信里   Chongxin Vil.        D
+131 67000320040     臺南市     東區   崇信里   Chongxin Vil.        D
+132 67000320039     臺南市     東區   德光里    Deguang Vil.        D
+133 67000320039     臺南市     東區   德光里    Deguang Vil.        D
+134 67000320039     臺南市     東區   德光里    Deguang Vil.        D
+135 67000320042     臺南市     東區   復興里     Fuxing Vil.        D
+136 67000320042     臺南市     東區   復興里     Fuxing Vil.        D
+137 67000320042     臺南市     東區   復興里     Fuxing Vil.        D
+138 67000320042     臺南市     東區   復興里     Fuxing Vil.        D
+139 67000320042     臺南市     東區   復興里     Fuxing Vil.        D
+140 67000320042     臺南市     東區   復興里     Fuxing Vil.        D
+141 67000320013     臺南市     東區   自強里    Ziqiang Vil.        D
+142 67000320013     臺南市     東區   自強里    Ziqiang Vil.        D
+143 67000320013     臺南市     東區   自強里    Ziqiang Vil.        D
+144 67000320013     臺南市     東區   自強里    Ziqiang Vil.        D
+145 67000320045     臺南市     東區   文聖里   Wensheng Vil.        D
+146 67000320045     臺南市     東區   文聖里   Wensheng Vil.        D
+147 67000320045     臺南市     東區   文聖里   Wensheng Vil.        D
+148 67000320045     臺南市     東區   文聖里   Wensheng Vil.        D
+149 67000320045     臺南市     東區   文聖里   Wensheng Vil.        D
+150 67000320001     臺南市     東區   富裕里       Fuyu Vil.        D
+151 67000320001     臺南市     東區   富裕里       Fuyu Vil.        D
+152 67000320001     臺南市     東區   富裕里       Fuyu Vil.        D
+153 67000320024     臺南市     東區   龍山里   Longshan Vil.        D
+154 67000320017     臺南市     東區   關聖里  Guansheng Vil.        D
+155 67000320017     臺南市     東區   關聖里  Guansheng Vil.        D
+156 67000320017     臺南市     東區   關聖里  Guansheng Vil.        D
+157 67000320017     臺南市     東區   關聖里  Guansheng Vil.        D
+158 67000320017     臺南市     東區   關聖里  Guansheng Vil.        D
+159 67000320017     臺南市     東區   關聖里  Guansheng Vil.        D
+160 67000320009     臺南市     東區   新東里    Xindong Vil.        D
+161 67000320009     臺南市     東區   新東里    Xindong Vil.        D
+162 67000320009     臺南市     東區   新東里    Xindong Vil.        D
+163 67000320009     臺南市     東區   新東里    Xindong Vil.        D
+164 67000320009     臺南市     東區   新東里    Xindong Vil.        D
+165 67000320009     臺南市     東區   新東里    Xindong Vil.        D
+166 67000320020     臺南市     東區   富強里    Fuqiang Vil.        D
+167 67000320020     臺南市     東區   富強里    Fuqiang Vil.        D
+168 67000320020     臺南市     東區   富強里    Fuqiang Vil.        D
+169 67000320020     臺南市     東區   富強里    Fuqiang Vil.        D
+170 67000320020     臺南市     東區   富強里    Fuqiang Vil.        D
+171 67000320020     臺南市     東區   富強里    Fuqiang Vil.        D
+172 67000320020     臺南市     東區   富強里    Fuqiang Vil.        D
+173 67000320020     臺南市     東區   富強里    Fuqiang Vil.        D
+174 67000320005     臺南市     東區   泉南里    Quannan Vil.        D
+175 67000320005     臺南市     東區   泉南里    Quannan Vil.        D
+176 67000320034     臺南市     東區   東聖里  Dongsheng Vil.        D
+177 67000320034     臺南市     東區   東聖里  Dongsheng Vil.        D
+178 67000320034     臺南市     東區   東聖里  Dongsheng Vil.        D
+179 67000320011     臺南市     東區   東安里    Dong'an Vil.        D
+180 67000320011     臺南市     東區   東安里    Dong'an Vil.        D
+181 67000320038     臺南市     東區   大同里     Datong Vil.        D
+182 67000320038     臺南市     東區   大同里     Datong Vil.        D
+183 67000320038     臺南市     東區   大同里     Datong Vil.        D
+184 67000320038     臺南市     東區   大同里     Datong Vil.        D
+185 67000320038     臺南市     東區   大同里     Datong Vil.        D
+186 67000320018     臺南市     東區   衛國里     Weiguo Vil.        D
+187 67000320018     臺南市     東區   衛國里     Weiguo Vil.        D
+188 67000320002     臺南市     東區   裕農里     Yunong Vil.        D
+189 67000320002     臺南市     東區   裕農里     Yunong Vil.        D
+190 67000320002     臺南市     東區   裕農里     Yunong Vil.        D
+191 67000320002     臺南市     東區   裕農里     Yunong Vil.        D
+192 67000320002     臺南市     東區   裕農里     Yunong Vil.        D
+193 67000320002     臺南市     東區   裕農里     Yunong Vil.        D
+194 67000320002     臺南市     東區   裕農里     Yunong Vil.        D
+195 67000320044     臺南市     東區   南聖里   Nansheng Vil.        D
+196 67000320044     臺南市     東區   南聖里   Nansheng Vil.        D
+197 67000320044     臺南市     東區   南聖里   Nansheng Vil.        D
+198 67000320030     臺南市     東區   崇誨里   Chonghui Vil.        D
+199 67000320030     臺南市     東區   崇誨里   Chonghui Vil.        D
+200 67000320036     臺南市     東區   東門里    Dongmen Vil.        D
+201 67000320036     臺南市     東區   東門里    Dongmen Vil.        D
+202 67000320010     臺南市     東區   中西里    Zhongxi Vil.        D
+203 67000320010     臺南市     東區   中西里    Zhongxi Vil.        D
+204 67000320031     臺南市     東區   東明里   Dongming Vil.        D
+205 67000320031     臺南市     東區   東明里   Dongming Vil.        D
+206 67000320031     臺南市     東區   東明里   Dongming Vil.        D
+207 67000320021     臺南市     東區   圍下里     Weixia Vil.        D
+208 67000320021     臺南市     東區   圍下里     Weixia Vil.        D
+209 67000320008     臺南市     東區   東光里  Dongguang Vil.        D
+210 67000320008     臺南市     東區   東光里  Dongguang Vil.        D
+211 67000320008     臺南市     東區   東光里  Dongguang Vil.        D
+212 67000320008     臺南市     東區   東光里  Dongguang Vil.        D
+213 67000320008     臺南市     東區   東光里  Dongguang Vil.        D
+214 67000320008     臺南市     東區   東光里  Dongguang Vil.        D
+215 67000320007     臺南市     東區   後甲里     Houjia Vil.        D
+216 67000320007     臺南市     東區   後甲里     Houjia Vil.        D
+217 67000320007     臺南市     東區   後甲里     Houjia Vil.        D
+218 67000320007     臺南市     東區   後甲里     Houjia Vil.        D
+219 67000320007     臺南市     東區   後甲里     Houjia Vil.        D
+220 67000320007     臺南市     東區   後甲里     Houjia Vil.        D
+221 67000320007     臺南市     東區   後甲里     Houjia Vil.        D
+222 67000320027     臺南市     東區   莊敬里 Zhuangjing Vil.        D
+223 67000320027     臺南市     東區   莊敬里 Zhuangjing Vil.        D
+224 67000320027     臺南市     東區   莊敬里 Zhuangjing Vil.        D
+225 67000320022     臺南市     東區   小東里   Xiaodong Vil.        D
+226 67000320022     臺南市     東區   小東里   Xiaodong Vil.        D
+227 67000320022     臺南市     東區   小東里   Xiaodong Vil.        D
+228 67000320022     臺南市     東區   小東里   Xiaodong Vil.        D
+229 67000320023     臺南市     東區   大學里      Daxue Vil.        D
+230 67000320023     臺南市     東區   大學里      Daxue Vil.        D
+231 67000320037     臺南市     東區   成大里    Chengda Vil.        D
+232 67000320037     臺南市     東區   成大里    Chengda Vil.        D
+233 67000320037     臺南市     東區   成大里    Chengda Vil.        D
+234 67000340033     臺南市     北區   公園里   Gongyuan Vil.        D
+235 67000340033     臺南市     北區   公園里   Gongyuan Vil.        D
+236 67000340033     臺南市     北區   公園里   Gongyuan Vil.        D
+237 67000340032     臺南市     北區   中樓里   Zhonglou Vil.        D
+238 67000340032     臺南市     北區   中樓里   Zhonglou Vil.        D
+239 67000340032     臺南市     北區   中樓里   Zhonglou Vil.        D
+240 67000340032     臺南市     北區   中樓里   Zhonglou Vil.        D
+241 67000340032     臺南市     北區   中樓里   Zhonglou Vil.        D
+242 67000340032     臺南市     北區   中樓里   Zhonglou Vil.        D
+243 67000340043     臺南市     北區   賢北里    Xianbei Vil.        D
+244 67000340043     臺南市     北區   賢北里    Xianbei Vil.        D
+245 67000340043     臺南市     北區   賢北里    Xianbei Vil.        D
+246 67000340043     臺南市     北區   賢北里    Xianbei Vil.        D
+247 67000340018     臺南市     北區   大豐里     Dafeng Vil.        D
+248 67000340018     臺南市     北區   大豐里     Dafeng Vil.        D
+249 67000340018     臺南市     北區   大豐里     Dafeng Vil.        D
+250 67000340018     臺南市     北區   大豐里     Dafeng Vil.        D
+251 67000340026     臺南市     北區   大港里     Dagang Vil.        D
+252 67000340026     臺南市     北區   大港里     Dagang Vil.        D
+253 67000340026     臺南市     北區   大港里     Dagang Vil.        D
+254 67000340023     臺南市     北區   正覺里   Zhengjue Vil.        D
+255 67000340023     臺南市     北區   正覺里   Zhengjue Vil.        D
+256 67000340023     臺南市     北區   正覺里   Zhengjue Vil.        D
+257 67000340023     臺南市     北區   正覺里   Zhengjue Vil.        D
+258 67000340042     臺南市     北區   大和里       Dahe Vil.        D
+259 67000340042     臺南市     北區   大和里       Dahe Vil.        D
+260 67000340042     臺南市     北區   大和里       Dahe Vil.        D
+261 67000340042     臺南市     北區   大和里       Dahe Vil.        D
+262 67000340042     臺南市     北區   大和里       Dahe Vil.        D
+263 67000340042     臺南市     北區   大和里       Dahe Vil.        D
+264 67000340042     臺南市     北區   大和里       Dahe Vil.        D
+265 67000340024     臺南市     北區   成功里  Chenggong Vil.        D
+266 67000340024     臺南市     北區   成功里  Chenggong Vil.        D
+267 67000340024     臺南市     北區   成功里  Chenggong Vil.        D
+268 67000340024     臺南市     北區   成功里  Chenggong Vil.        D
+269 67000340024     臺南市     北區   成功里  Chenggong Vil.        D
+270 67000330020     臺南市     南區   佛壇里      Fotan Vil.        D
+271 67000330020     臺南市     南區   佛壇里      Fotan Vil.        D
+272 67000330020     臺南市     南區   佛壇里      Fotan Vil.        D
+273 67000330020     臺南市     南區   佛壇里      Fotan Vil.        D
+274 67000330020     臺南市     南區   佛壇里      Fotan Vil.        D
+275 67000330020     臺南市     南區   佛壇里      Fotan Vil.        D
+276 67000330020     臺南市     南區   佛壇里      Fotan Vil.        D
+277 67000330019     臺南市     南區   同安里    Tong'an Vil.        D
+278 67000330019     臺南市     南區   同安里    Tong'an Vil.        D
+279 67000330019     臺南市     南區   同安里    Tong'an Vil.        D
+280 67000330019     臺南市     南區   同安里    Tong'an Vil.        D
+281 67000330019     臺南市     南區   同安里    Tong'an Vil.        D
+282 67000330037     臺南市     南區   松安里    Song'an Vil.        D
+283 67000330037     臺南市     南區   松安里    Song'an Vil.        D
+284 67000330037     臺南市     南區   松安里    Song'an Vil.        D
+285 67000330037     臺南市     南區   松安里    Song'an Vil.        D
+286 67000330037     臺南市     南區   松安里    Song'an Vil.        D
+287 67000330037     臺南市     南區   松安里    Song'an Vil.        D
+288 67000330037     臺南市     南區   松安里    Song'an Vil.        D
+289 67000330038     臺南市     南區   永寧里   Yongning Vil.        D
+290 67000330038     臺南市     南區   永寧里   Yongning Vil.        D
+291 67000330038     臺南市     南區   永寧里   Yongning Vil.        D
+292 67000330016     臺南市     南區   喜南里      Xinan Vil.        D
+293 67000330016     臺南市     南區   喜南里      Xinan Vil.        D
+294 67000330016     臺南市     南區   喜南里      Xinan Vil.        D
+295 67000330014     臺南市     南區   喜東里     Xidong Vil.        D
+296 67000330014     臺南市     南區   喜東里     Xidong Vil.        D
+297 67000330014     臺南市     南區   喜東里     Xidong Vil.        D
+298 67000330015     臺南市     南區   喜北里      Xibei Vil.        D
+299 67000330015     臺南市     南區   喜北里      Xibei Vil.        D
+300 67000330029     臺南市     南區   南都里     Nandou Vil.        D
+301 67000330029     臺南市     南區   南都里     Nandou Vil.        D
+302 67000330029     臺南市     南區   南都里     Nandou Vil.        D
+303 67000330029     臺南市     南區   南都里     Nandou Vil.        D
+304 67000330039     臺南市     南區   南華里     Nanhua Vil.        D
+305 67000330039     臺南市     南區   南華里     Nanhua Vil.        D
+306 67000330032     臺南市     南區   建南里    Jiannan Vil.        D
+307 67000330032     臺南市     南區   建南里    Jiannan Vil.        D
+308 67000330032     臺南市     南區   建南里    Jiannan Vil.        D
+309 67000330032     臺南市     南區   建南里    Jiannan Vil.        D
+310 67000330032     臺南市     南區   建南里    Jiannan Vil.        D
+311 67000330032     臺南市     南區   建南里    Jiannan Vil.        D
+312 67000330032     臺南市     南區   建南里    Jiannan Vil.        D
+313 67000330032     臺南市     南區   建南里    Jiannan Vil.        D
+314 67000330026     臺南市     南區   明興里   Mingxing Vil.        D
+315 67000330026     臺南市     南區   明興里   Mingxing Vil.        D
+316 67000330026     臺南市     南區   明興里   Mingxing Vil.        D
+317 67000330026     臺南市     南區   明興里   Mingxing Vil.        D
+318 67000330026     臺南市     南區   明興里   Mingxing Vil.        D
+319 67000330026     臺南市     南區   明興里   Mingxing Vil.        D
+320 67000330033     臺南市     南區   郡南里     Junnan Vil.        D
+321 67000330033     臺南市     南區   郡南里     Junnan Vil.        D
+322 67000330033     臺南市     南區   郡南里     Junnan Vil.        D
+323 67000330033     臺南市     南區   郡南里     Junnan Vil.        D
+324 67000330033     臺南市     南區   郡南里     Junnan Vil.        D
+325 67000330030     臺南市     南區   開南里     Kainan Vil.        D
+326 67000330030     臺南市     南區   開南里     Kainan Vil.        D
+327 67000330030     臺南市     南區   開南里     Kainan Vil.        D
+328 67000330030     臺南市     南區   開南里     Kainan Vil.        D
+329 67000330030     臺南市     南區   開南里     Kainan Vil.        D
+330 67000330013     臺南市     南區   明亮里  Mingliang Vil.        D
+331 67000330013     臺南市     南區   明亮里  Mingliang Vil.        D
+332 67000330013     臺南市     南區   明亮里  Mingliang Vil.        D
+333 67000330013     臺南市     南區   明亮里  Mingliang Vil.        D
+334 67000330013     臺南市     南區   明亮里  Mingliang Vil.        D
+335 67000330013     臺南市     南區   明亮里  Mingliang Vil.        D
+336 67000330013     臺南市     南區   明亮里  Mingliang Vil.        D
+337 67000330036     臺南市     南區   鯤鯓里    Kunshen Vil.        D
+338 67000330036     臺南市     南區   鯤鯓里    Kunshen Vil.        D
+339 67000330036     臺南市     南區   鯤鯓里    Kunshen Vil.        D
+340 67000330022     臺南市     南區   大忠里    Dazhong Vil.        D
+341 67000330022     臺南市     南區   大忠里    Dazhong Vil.        D
+342 67000330022     臺南市     南區   大忠里    Dazhong Vil.        D
+343 67000330022     臺南市     南區   大忠里    Dazhong Vil.        D
+344 67000330011     臺南市     南區   光明里  Guangming Vil.        D
+345 67000330011     臺南市     南區   光明里  Guangming Vil.        D
+346 67000330034     臺南市     南區   府南里      Funan Vil.        D
+347 67000330034     臺南市     南區   府南里      Funan Vil.        D
+348 67000330034     臺南市     南區   府南里      Funan Vil.        D
+349 67000330034     臺南市     南區   府南里      Funan Vil.        D
+350 67000330034     臺南市     南區   府南里      Funan Vil.        D
+351 67000330021     臺南市     南區   大林里      Dalin Vil.        D
+352 67000330021     臺南市     南區   大林里      Dalin Vil.        D
+353 67000330021     臺南市     南區   大林里      Dalin Vil.        D
+354 67000330009     臺南市     南區   國宅里    Guozhai Vil.        D
+355 67000330009     臺南市     南區   國宅里    Guozhai Vil.        D
+356 67000330009     臺南市     南區   國宅里    Guozhai Vil.        D
+357 67000330009     臺南市     南區   國宅里    Guozhai Vil.        D
+358 67000330009     臺南市     南區   國宅里    Guozhai Vil.        D
+359 67000330008     臺南市     南區   田寮里   Tianliao Vil.        D
+360 67000330008     臺南市     南區   田寮里   Tianliao Vil.        D
+361 67000330008     臺南市     南區   田寮里   Tianliao Vil.        D
+362 67000330008     臺南市     南區   田寮里   Tianliao Vil.        D
+363 67000330008     臺南市     南區   田寮里   Tianliao Vil.        D
+364 67000330008     臺南市     南區   田寮里   Tianliao Vil.        D
+365 67000330024     臺南市     南區   新生里   Xinsheng Vil.        D
+366 67000330024     臺南市     南區   新生里   Xinsheng Vil.        D
+367 67000330024     臺南市     南區   新生里   Xinsheng Vil.        D
+368 67000330001     臺南市     南區   竹溪里      Zhuxi Vil.        D
+369 67000330001     臺南市     南區   竹溪里      Zhuxi Vil.        D
+370 67000330003     臺南市     南區   明德里     Mingde Vil.        D
+371 67000330025     臺南市     南區   再興里    Zaixing Vil.        D
+372 67000330025     臺南市     南區   再興里    Zaixing Vil.        D
+373 67000330025     臺南市     南區   再興里    Zaixing Vil.        D
+374 67000330025     臺南市     南區   再興里    Zaixing Vil.        D
+375 67000330025     臺南市     南區   再興里    Zaixing Vil.        D
+376 67000330025     臺南市     南區   再興里    Zaixing Vil.        D
+377 67000330031     臺南市     南區   彰南里   Zhangnan Vil.        D
+378 67000330031     臺南市     南區   彰南里   Zhangnan Vil.        D
+379 67000330028     臺南市     南區   金華里     Jinhua Vil.        D
+380 67000330028     臺南市     南區   金華里     Jinhua Vil.        D
+381 67000330028     臺南市     南區   金華里     Jinhua Vil.        D
+382 67000330028     臺南市     南區   金華里     Jinhua Vil.        D
+383 67000330028     臺南市     南區   金華里     Jinhua Vil.        D
+384 67000330028     臺南市     南區   金華里     Jinhua Vil.        D
+385 67000330028     臺南市     南區   金華里     Jinhua Vil.        D
+386 67000330028     臺南市     南區   金華里     Jinhua Vil.        D
+387 67000330028     臺南市     南區   金華里     Jinhua Vil.        D
+388 67000330007     臺南市     南區   新興里    Xinxing Vil.        D
+389 67000330007     臺南市     南區   新興里    Xinxing Vil.        D
+390 67000330007     臺南市     南區   新興里    Xinxing Vil.        D
+391 67000330007     臺南市     南區   新興里    Xinxing Vil.        D
+392 67000330007     臺南市     南區   新興里    Xinxing Vil.        D
+393 67000330007     臺南市     南區   新興里    Xinxing Vil.        D
+394 67000330007     臺南市     南區   新興里    Xinxing Vil.        D
+395 67000330035     臺南市     南區   文南里     Wennan Vil.        D
+396 67000330035     臺南市     南區   文南里     Wennan Vil.        D
+397 67000330035     臺南市     南區   文南里     Wennan Vil.        D
+398 67000330035     臺南市     南區   文南里     Wennan Vil.        D
+399 67000330035     臺南市     南區   文南里     Wennan Vil.        D
+400 67000330035     臺南市     南區   文南里     Wennan Vil.        D
+401 67000330006     臺南市     南區   新昌里   Xinchang Vil.        D
+402 67000330006     臺南市     南區   新昌里   Xinchang Vil.        D
+403 67000330006     臺南市     南區   新昌里   Xinchang Vil.        D
+404 67000330006     臺南市     南區   新昌里   Xinchang Vil.        D
+405 67000330006     臺南市     南區   新昌里   Xinchang Vil.        D
+406 67000330005     臺南市     南區   廣州里  Guangzhou Vil.        D
+407 67000330005     臺南市     南區   廣州里  Guangzhou Vil.        D
+408 67000330005     臺南市     南區   廣州里  Guangzhou Vil.        D
+409 67000330005     臺南市     南區   廣州里  Guangzhou Vil.        D
+410 67000330005     臺南市     南區   廣州里  Guangzhou Vil.        D
+411 67000330005     臺南市     南區   廣州里  Guangzhou Vil.        D
+412 67000330005     臺南市     南區   廣州里  Guangzhou Vil.        D
+413 67000330027     臺南市     南區   文華里     Wenhua Vil.        D
+414 67000330027     臺南市     南區   文華里     Wenhua Vil.        D
+415 67000330027     臺南市     南區   文華里     Wenhua Vil.        D
+416 67000330027     臺南市     南區   文華里     Wenhua Vil.        D
+417 67000330027     臺南市     南區   文華里     Wenhua Vil.        D
+418 67000350039     臺南市   安南區   溪頂里     Xiding Vil.        D
+419 67000350039     臺南市   安南區   溪頂里     Xiding Vil.        D
+420 67000350039     臺南市   安南區   溪頂里     Xiding Vil.        D
+421 67000350041     臺南市   安南區   海佃里    Haidian Vil.        D
+422 67000350041     臺南市   安南區   海佃里    Haidian Vil.        D
+423 67000350041     臺南市   安南區   海佃里    Haidian Vil.        D
+424 67000350041     臺南市   安南區   海佃里    Haidian Vil.        D
+425 67000350041     臺南市   安南區   海佃里    Haidian Vil.        D
+426 67000350046     臺南市   安南區   溪東里     Xidong Vil.        D
+427 67000350046     臺南市   安南區   溪東里     Xidong Vil.        D
+428 67000350046     臺南市   安南區   溪東里     Xidong Vil.        D
+429 67000350046     臺南市   安南區   溪東里     Xidong Vil.        D
+430 67000350038     臺南市   安南區   溪北里      Xibei Vil.        D
+431 67000350038     臺南市   安南區   溪北里      Xibei Vil.        D
+432 67000350038     臺南市   安南區   溪北里      Xibei Vil.        D
+433 67000350040     臺南市   安南區   溪墘里       Xiqi Vil.        D
+434 67000350040     臺南市   安南區   溪墘里       Xiqi Vil.        D
+435 67000350050     臺南市   安南區   安富里       Anfu Vil.        D
+436 67000350050     臺南市   安南區   安富里       Anfu Vil.        D
+437 67000350050     臺南市   安南區   安富里       Anfu Vil.        D
+438 67000350019     臺南市   安南區   塩田里   Yantian  Vil.        D
+439 67000350043     臺南市   安南區   鳳凰里  Fenghuang Vil.        D
+440 67000350014     臺南市   安南區   公親里    Gongqin Vil.        D
+441 67000350033     臺南市   安南區   砂崙里     Shalun Vil.        D
+442 67000360009     臺南市   安平區   文平里    Wenping Vil.        D
+443 67000360009     臺南市   安平區   文平里    Wenping Vil.        D
+444 67000360009     臺南市   安平區   文平里    Wenping Vil.        D
+445 67000360009     臺南市   安平區   文平里    Wenping Vil.        D
+446 67000360009     臺南市   安平區   文平里    Wenping Vil.        D
+447 67000360010     臺南市   安平區   國平里    Guoping Vil.        D
+448 67000360010     臺南市   安平區   國平里    Guoping Vil.        D
+449 67000360010     臺南市   安平區   國平里    Guoping Vil.        D
+450 67000360010     臺南市   安平區   國平里    Guoping Vil.        D
+451 67000360010     臺南市   安平區   國平里    Guoping Vil.        D
+452 67000360011     臺南市   安平區   育平里     Yuping Vil.        D
+453 67000360011     臺南市   安平區   育平里     Yuping Vil.        D
+454 67000360011     臺南市   安平區   育平里     Yuping Vil.        D
+455 67000360011     臺南市   安平區   育平里     Yuping Vil.        D
+456 67000360011     臺南市   安平區   育平里     Yuping Vil.        D
+457 67000360007     臺南市   安平區   華平里    Huaping Vil.        D
+458 67000360007     臺南市   安平區   華平里    Huaping Vil.        D
+459 67000360007     臺南市   安平區   華平里    Huaping Vil.        D
+460 67000360007     臺南市   安平區   華平里    Huaping Vil.        D
+461 67000360007     臺南市   安平區   華平里    Huaping Vil.        D
+462 67000360007     臺南市   安平區   華平里    Huaping Vil.        D
+463 67000360006     臺南市   安平區   怡平里     Yiping Vil.        D
+464 67000360006     臺南市   安平區   怡平里     Yiping Vil.        D
+465 67000360006     臺南市   安平區   怡平里     Yiping Vil.        D
+466 67000360006     臺南市   安平區   怡平里     Yiping Vil.        D
+467 67000360006     臺南市   安平區   怡平里     Yiping Vil.        D
+468 67000360006     臺南市   安平區   怡平里     Yiping Vil.        D
+469 67000360005     臺南市   安平區   建平里   Jianping Vil.        D
+470 67000360005     臺南市   安平區   建平里   Jianping Vil.        D
+471 67000360005     臺南市   安平區   建平里   Jianping Vil.        D
+472 67000360005     臺南市   安平區   建平里   Jianping Vil.        D
+473 67000360005     臺南市   安平區   建平里   Jianping Vil.        D
+474 67000350042     臺南市   安南區   幸福里     Xingfu Vil.        D
+475 67000350042     臺南市   安南區   幸福里     Xingfu Vil.        D
+476 67000350042     臺南市   安南區   幸福里     Xingfu Vil.        D
+477 67000350042     臺南市   安南區   幸福里     Xingfu Vil.        D
+478 67000270008     臺南市   仁德區   上崙里   Shanglun Vil.        D
+479 67000270008     臺南市   仁德區   上崙里   Shanglun Vil.        D
+480 67000270008     臺南市   仁德區   上崙里   Shanglun Vil.        D
+481 67000270008     臺南市   仁德區   上崙里   Shanglun Vil.        D
+482 67000270007     臺南市   仁德區   後壁里      Houbi Vil.        D
+483 67000270007     臺南市   仁德區   後壁里      Houbi Vil.        D
+484 67000270007     臺南市   仁德區   後壁里      Houbi Vil.        D
+485 67000270012     臺南市   仁德區   成功里  Chenggong Vil.        D
+486 67000270012     臺南市   仁德區   成功里  Chenggong Vil.        D
+487 67000270012     臺南市   仁德區   成功里  Chenggong Vil.        D
+488 67000270012     臺南市   仁德區   成功里  Chenggong Vil.        D
+489 67000270012     臺南市   仁德區   成功里  Chenggong Vil.        D
+490 67000270013     臺南市   仁德區   仁和里      Renhe Vil.        D
+491 67000270013     臺南市   仁德區   仁和里      Renhe Vil.        D
+492 67000270013     臺南市   仁德區   仁和里      Renhe Vil.        D
+493 67000270014     臺南市   仁德區   仁愛里     Ren'ai Vil.        D
+494 67000270014     臺南市   仁德區   仁愛里     Ren'ai Vil.        D
+495 67000270014     臺南市   仁德區   仁愛里     Ren'ai Vil.        D
+496 67000270014     臺南市   仁德區   仁愛里     Ren'ai Vil.        D
+497 67000270004     臺南市   仁德區   仁德里      Rende Vil.        D
+498 67000270004     臺南市   仁德區   仁德里      Rende Vil.        D
+499 67000270004     臺南市   仁德區   仁德里      Rende Vil.        D
+500 67000330018     臺南市     南區   興農里   Xingnong Vil.        D
+501 67000330018     臺南市     南區   興農里   Xingnong Vil.        D
+502 67000330018     臺南市     南區   興農里   Xingnong Vil.        D
+503 67000330018     臺南市     南區   興農里   Xingnong Vil.        D
+504 67000330017     臺南市     南區   省躬里  Shenggong Vil.        D
+505 67000330017     臺南市     南區   省躬里  Shenggong Vil.        D
+506 67000330017     臺南市     南區   省躬里  Shenggong Vil.        D
+507 67000270006     臺南市   仁德區   新田里    Xintian Vil.        D
+508 67000270003     臺南市   仁德區   一甲里      Yijia Vil.        D
+509 67000270003     臺南市   仁德區   一甲里      Yijia Vil.        D
+510 67000270003     臺南市   仁德區   一甲里      Yijia Vil.        D
+511 67000270003     臺南市   仁德區   一甲里      Yijia Vil.        D
+512 67000320026     臺南市     東區   德高里      Degao Vil.        D
+513 67000320026     臺南市     東區   德高里      Degao Vil.        D
+514 67000320026     臺南市     東區   德高里      Degao Vil.        D
+515 67000320026     臺南市     東區   德高里      Degao Vil.        D
+516 67000320006     臺南市     東區   仁和里      Renhe Vil.        D
+517 67000320006     臺南市     東區   仁和里      Renhe Vil.        D
+518 67000320006     臺南市     東區   仁和里      Renhe Vil.        D
+519 67000270017     臺南市   仁德區   中洲里  Zhongzhou Vil.        D
+520 67000270017     臺南市   仁德區   中洲里  Zhongzhou Vil.        D
+521 67000310014     臺南市   永康區   西灣里      Xiwan Vil.        D
+522 67000310014     臺南市   永康區   西灣里      Xiwan Vil.        D
+523 67000310014     臺南市   永康區   西灣里      Xiwan Vil.        D
+524 67000310011     臺南市   永康區   甲頂里    Jiading Vil.        D
+525 67000310011     臺南市   永康區   甲頂里    Jiading Vil.        D
+526 67000310011     臺南市   永康區   甲頂里    Jiading Vil.        D
+527 67000310011     臺南市   永康區   甲頂里    Jiading Vil.        D
+528 67000310003     臺南市   永康區   永康里   Yongkang Vil.        D
+529 67000310003     臺南市   永康區   永康里   Yongkang Vil.        D
+530 67000310003     臺南市   永康區   永康里   Yongkang Vil.        D
+531 67000310038     臺南市   永康區   正強里 Zhengqiang Vil.        D
+532 67000310038     臺南市   永康區   正強里 Zhengqiang Vil.        D
+533 67000310038     臺南市   永康區   正強里 Zhengqiang Vil.        D
+534 67000310038     臺南市   永康區   正強里 Zhengqiang Vil.        D
+535 67000310038     臺南市   永康區   正強里 Zhengqiang Vil.        D
+536 67000310038     臺南市   永康區   正強里 Zhengqiang Vil.        D
+537 67000310038     臺南市   永康區   正強里 Zhengqiang Vil.        D
+538 67000360004     臺南市   安平區   漁光里    Yuguang Vil.        D
+539 67000360002     臺南市   安平區   金城里   Jincheng Vil.        D
+540 67000360002     臺南市   安平區   金城里   Jincheng Vil.        D
+541 67000360002     臺南市   安平區   金城里   Jincheng Vil.        D
+542 67000310036     臺南市   永康區   尚頂里  Shangding Vil.        D
+543 67000310036     臺南市   永康區   尚頂里  Shangding Vil.        D
+544 67000310036     臺南市   永康區   尚頂里  Shangding Vil.        D
+545 67000310019     臺南市   永康區   復興里     Fuxing Vil.        D
+546 67000310019     臺南市   永康區   復興里     Fuxing Vil.        D
+547 67000310019     臺南市   永康區   復興里     Fuxing Vil.        D
+548 67000310019     臺南市   永康區   復興里     Fuxing Vil.        D
+549 67000310019     臺南市   永康區   復興里     Fuxing Vil.        D
+550 67000310019     臺南市   永康區   復興里     Fuxing Vil.        D
+551 67000310022     臺南市   永康區   神洲里   Shenzhou Vil.        D
+552 67000310020     臺南市   永康區   復國里      Fuguo Vil.        D
+553 67000310020     臺南市   永康區   復國里      Fuguo Vil.        D
+554 67000310020     臺南市   永康區   復國里      Fuguo Vil.        D
+555 67000310020     臺南市   永康區   復國里      Fuguo Vil.        D
+556 67000310020     臺南市   永康區   復國里      Fuguo Vil.        D
+557 67000310020     臺南市   永康區   復國里      Fuguo Vil.        D
+558 67000310020     臺南市   永康區   復國里      Fuguo Vil.        D
+559 67000310032     臺南市   永康區   三合里      Sanhe Vil.        D
+560 67000310032     臺南市   永康區   三合里      Sanhe Vil.        D
+561 67000310032     臺南市   永康區   三合里      Sanhe Vil.        D
+562 67000310032     臺南市   永康區   三合里      Sanhe Vil.        D
+563 67000310032     臺南市   永康區   三合里      Sanhe Vil.        D
+564 67000310037     臺南市   永康區   復華里      Fuhua Vil.        D
+565 67000310037     臺南市   永康區   復華里      Fuhua Vil.        D
+566 67000310037     臺南市   永康區   復華里      Fuhua Vil.        D
+567 67000310037     臺南市   永康區   復華里      Fuhua Vil.        D
+568 67000310037     臺南市   永康區   復華里      Fuhua Vil.        D
+569 67000310037     臺南市   永康區   復華里      Fuhua Vil.        D
+570 67000310037     臺南市   永康區   復華里      Fuhua Vil.        D
+571 67000310037     臺南市   永康區   復華里      Fuhua Vil.        D
+572 67000310037     臺南市   永康區   復華里      Fuhua Vil.        D
+573 67000310037     臺南市   永康區   復華里      Fuhua Vil.        D
+574 67000310037     臺南市   永康區   復華里      Fuhua Vil.        D
+575 67000310030     臺南市   永康區   二王里     Erwang Vil.        D
+576 67000310030     臺南市   永康區   二王里     Erwang Vil.        D
+577 67000310030     臺南市   永康區   二王里     Erwang Vil.        D
+578 67000310030     臺南市   永康區   二王里     Erwang Vil.        D
+579 67000310030     臺南市   永康區   二王里     Erwang Vil.        D
+580 67000310030     臺南市   永康區   二王里     Erwang Vil.        D
+581 67000310030     臺南市   永康區   二王里     Erwang Vil.        D
+582 67000320033     臺南市     東區   東智里    Dongzhi Vil.        D
+583 67000320033     臺南市     東區   東智里    Dongzhi Vil.        D
+584 67000320033     臺南市     東區   東智里    Dongzhi Vil.        D
+585 67000320033     臺南市     東區   東智里    Dongzhi Vil.        D
+586 67000320033     臺南市     東區   東智里    Dongzhi Vil.        D
+587 67000330023     臺南市     南區   大恩里      Da'en Vil.        D
+588 67000330023     臺南市     南區   大恩里      Da'en Vil.        D
+589 67000330023     臺南市     南區   大恩里      Da'en Vil.        D
+590 67000330023     臺南市     南區   大恩里      Da'en Vil.        D
+591 67000370033     臺南市   中西區   西湖里       Xihu Vil.        D
+592 67000370033     臺南市   中西區   西湖里       Xihu Vil.        D
+593 67000370033     臺南市   中西區   西湖里       Xihu Vil.        D
+594 67000360015     臺南市   安平區   平安里    Ping'an Vil.        D
+595 67000360015     臺南市   安平區   平安里    Ping'an Vil.        D
+596 67000360015     臺南市   安平區   平安里    Ping'an Vil.        D
+597 67000360015     臺南市   安平區   平安里    Ping'an Vil.        D
+598 67000370034     臺南市   中西區   西賢里     Xixian Vil.        D
+599 67000370034     臺南市   中西區   西賢里     Xixian Vil.        D
+600 67000350036     臺南市   安南區   四草里      Sicao Vil.        D
+601 67000350006     臺南市   安南區   安東里     Andong Vil.        D
+602 67000350006     臺南市   安南區   安東里     Andong Vil.        D
+603 67000350006     臺南市   安南區   安東里     Andong Vil.        D
+604 67000350047     臺南市   安南區   淵中里  Yuanzhong Vil.        D
+605 67000350047     臺南市   安南區   淵中里  Yuanzhong Vil.        D
+606 67000350047     臺南市   安南區   淵中里  Yuanzhong Vil.        D
+607 67000350031     臺南市   安南區   城西里    Chengxi Vil.        D
+608 67000350022     臺南市   安南區   佃東里   Diandong Vil.        D
+609 67000350010     臺南市   安南區   新順里    Xinshun Vil.        D
+610 67000350010     臺南市   安南區   新順里    Xinshun Vil.        D
+611 67000350010     臺南市   安南區   新順里    Xinshun Vil.        D
+612 67000350010     臺南市   安南區   新順里    Xinshun Vil.        D
+613 67000350010     臺南市   安南區   新順里    Xinshun Vil.        D
+614 67000310018     臺南市   永康區   新樹里     Xinshu Vil.        D
+615 67000310010     臺南市   永康區   塩行里   Yanxing  Vil.        D
+616 67000310010     臺南市   永康區   塩行里   Yanxing  Vil.        D
+617 67000310010     臺南市   永康區   塩行里   Yanxing  Vil.        D
+618 67000310010     臺南市   永康區   塩行里   Yanxing  Vil.        D
+619 67000310010     臺南市   永康區   塩行里   Yanxing  Vil.        D
+620 67000310010     臺南市   永康區   塩行里   Yanxing  Vil.        D
+621 67000310010     臺南市   永康區   塩行里   Yanxing  Vil.        D
+622 67000310010     臺南市   永康區   塩行里   Yanxing  Vil.        D
+623 67000350035     臺南市   安南區   鹿耳里      Lu'er Vil.        D
+624 67000350016     臺南市   安南區   海西里      Haixi Vil.        D
+625 67000350016     臺南市   安南區   海西里      Haixi Vil.        D
+626 67000350023     臺南市   安南區   佃西里     Dianxi Vil.        D
+627 67000350023     臺南市   安南區   佃西里     Dianxi Vil.        D
+628 67000350023     臺南市   安南區   佃西里     Dianxi Vil.        D
+629 67000270019     臺南市   仁德區   文賢里    Wenxian Vil.        D
+630 67000310041     臺南市   永康區   龍埔里     Longpu Vil.        D
+631 67000310042     臺南市   永康區   永明里   Yongming Vil.        D
+632 67000330040     臺南市     南區   鹽埕里   Yancheng Vil.        D
+633 67000340051     臺南市     北區   北華里     Beihua Vil.        D
+634 67000340052     臺南市     北區   華德里      Huade Vil.        D
+635 67000340053     臺南市     北區   福德里       Fude Vil.        D
+636 67000340044     臺南市     北區   長勝里 Zhangsheng Vil.        D
+637 67000340050     臺南市     北區   長興里  Zhangxing Vil.        D
+638 67000340049     臺南市     北區   大興里     Daxing Vil.        D
+639 67000340048     臺南市     北區   大光里    Daguang Vil.        D
+640 67000340047     臺南市     北區   小北里    Xiaobei Vil.        D
+641 67000340055     臺南市     北區   雙安里  Shuang'an Vil.        D
+642 67000340054     臺南市     北區   立人里      Liren Vil.        D
+643 67000370042     臺南市   中西區 小西門里  Xiaoximen Vil.        D
+644 67000370044     臺南市   中西區   兌悅里     Duiyue Vil.        D
+645 67000370043     臺南市   中西區 五條港里 Wutiaogang Vil.        D
+646 67000370040     臺南市   中西區   南美里     Nanmei Vil.        D
+647 67000360017     臺南市   安平區   王城里  Wangcheng Vil.        D
+648 67000360016     臺南市   安平區   天妃里    Tianfei Vil.        D
+649 67000370039     臺南市   中西區   城隍里 Chenghuang Vil.        D
+650 67000370048     臺南市   中西區   西和里       Xihe Vil.        D
+651 67000340046     臺南市     北區   北門里     Beimen Vil.        D
+652 67000310029     臺南市   永康區   塩洲里   Yanzhou  Vil.        D
+653 67000310029     臺南市   永康區   塩洲里   Yanzhou  Vil.        D
+654 67000310029     臺南市   永康區   塩洲里   Yanzhou  Vil.        D
+655 67000310029     臺南市   永康區   塩洲里   Yanzhou  Vil.        D
+656 67000310029     臺南市   永康區   塩洲里   Yanzhou  Vil.        D
+657 67000310029     臺南市   永康區   塩洲里   Yanzhou  Vil.        D
+658 67000310029     臺南市   永康區   塩洲里   Yanzhou  Vil.        D
+659 67000310029     臺南市   永康區   塩洲里   Yanzhou  Vil.        D
+660 67000340004     臺南市     北區   東興里   Dongxing Vil.        D
+661 67000340004     臺南市     北區   東興里   Dongxing Vil.        D
+662 67000340004     臺南市     北區   東興里   Dongxing Vil.        D
+663 67000340019     臺南市     北區   重興里  Zhongxing Vil.        D
+664 67000340019     臺南市     北區   重興里  Zhongxing Vil.        D
+665 67000340020     臺南市     北區   和順里     Heshun Vil.        D
+666 67000340020     臺南市     北區   和順里     Heshun Vil.        D
+667 67000340020     臺南市     北區   和順里     Heshun Vil.        D
+668 67000340005     臺南市     北區   力行里     Lixing Vil.        D
+669 67000340005     臺南市     北區   力行里     Lixing Vil.        D
+670 67000340005     臺南市     北區   力行里     Lixing Vil.        D
+671 67000340005     臺南市     北區   力行里     Lixing Vil.        D
+672 67000340005     臺南市     北區   力行里     Lixing Vil.        D
+673 67000340041     臺南市     北區   文成里   Wencheng Vil.        D
+674 67000340041     臺南市     北區   文成里   Wencheng Vil.        D
+675 67000340041     臺南市     北區   文成里   Wencheng Vil.        D
+676 67000340038     臺南市     北區   元寶里    Yuanbao Vil.        D
+677 67000340038     臺南市     北區   元寶里    Yuanbao Vil.        D
+678 67000340001     臺南市     北區   開元里    Kaiyuan Vil.        D
+679 67000340001     臺南市     北區   開元里    Kaiyuan Vil.        D
+680 67000340040     臺南市     北區   成德里    Chengde Vil.        D
+681 67000340040     臺南市     北區   成德里    Chengde Vil.        D
+682 67000340040     臺南市     北區   成德里    Chengde Vil.        D
+683 67000340040     臺南市     北區   成德里    Chengde Vil.        D
+684 67000340040     臺南市     北區   成德里    Chengde Vil.        D
+685 67000340040     臺南市     北區   成德里    Chengde Vil.        D
+686 67000370016     臺南市   中西區   永華里    Yonghua Vil.        D
+687 67000370016     臺南市   中西區   永華里    Yonghua Vil.        D
+688 67000370016     臺南市   中西區   永華里    Yonghua Vil.        D
+689 67000370007     臺南市   中西區   郡王里    Junwang Vil.        D
+690 67000370007     臺南市   中西區   郡王里    Junwang Vil.        D
+691 67000310043     臺南市   永康區   塩興里    Yanxing Vil.        D
+692 67000340056     臺南市     北區   元美里    Yuanmei Vil.        D
+693 67000370047     臺南市   中西區   南廠里   Nanchang Vil.        D
+694 67000370045     臺南市   中西區   淺草里    Qiancao Vil.        D
+695 67000370046     臺南市   中西區   府前里     Fuqian Vil.        D
+696 67000370041     臺南市   中西區   南門里     Nanmen Vil.        D
+697 67000340045     臺南市     北區   合興里     Hexing Vil.        D
+698 67000310017     臺南市   永康區   北灣里     Beiwan Vil.        D
+699 67000310017     臺南市   永康區   北灣里     Beiwan Vil.        D
+700 67000310040     臺南市   永康區   北興里    Beixing Vil.        D
+701 67000310027     臺南市   永康區   龍潭里    Longtan Vil.        D
+702 67000310027     臺南市   永康區   龍潭里    Longtan Vil.        D
+703 67000310027     臺南市   永康區   龍潭里    Longtan Vil.        D
+704 67000310027     臺南市   永康區   龍潭里    Longtan Vil.        D
+705 67000310004     臺南市   永康區   埔園里     Puyuan Vil.        D
+706 67000310004     臺南市   永康區   埔園里     Puyuan Vil.        D
+707 67000310004     臺南市   永康區   埔園里     Puyuan Vil.        D
+708 67000310004     臺南市   永康區   埔園里     Puyuan Vil.        D
+709 67000310004     臺南市   永康區   埔園里     Puyuan Vil.        D
+710 67000310009     臺南市   永康區   三民里     Sanmin Vil.        D
+711 67000340008     臺南市     北區   仁愛里     Ren'ai Vil.        D
+712 67000340008     臺南市     北區   仁愛里     Ren'ai Vil.        D
+713 67000340008     臺南市     北區   仁愛里     Ren'ai Vil.        D
+714 67000340008     臺南市     北區   仁愛里     Ren'ai Vil.        D
+715 67000340007     臺南市     北區   振興里   Zhenxing Vil.        D
+716 67000340007     臺南市     北區   振興里   Zhenxing Vil.        D
+717 67000340007     臺南市     北區   振興里   Zhenxing Vil.        D
+718 67000340007     臺南市     北區   振興里   Zhenxing Vil.        D
+719 67000340039     臺南市     北區   永祥里  Yongxiang Vil.        D
+720 67000340039     臺南市     北區   永祥里  Yongxiang Vil.        D
+721 67000340039     臺南市     北區   永祥里  Yongxiang Vil.        D
+722 67000340039     臺南市     北區   永祥里  Yongxiang Vil.        D
+723 67000340025     臺南市     北區   文元里    Wenyuan Vil.        D
+724 67000340025     臺南市     北區   文元里    Wenyuan Vil.        D
+725 67000340025     臺南市     北區   文元里    Wenyuan Vil.        D
+726 67000340025     臺南市     北區   文元里    Wenyuan Vil.        D
+727 67000340025     臺南市     北區   文元里    Wenyuan Vil.        D
+728 67000340025     臺南市     北區   文元里    Wenyuan Vil.        D
+729 67000370011     臺南市   中西區   開山里    Kaishan Vil.        D
+730 67000370011     臺南市   中西區   開山里    Kaishan Vil.        D
+731 67000370031     臺南市   中西區   大涼里    Daliang Vil.        D
+732 67000370031     臺南市   中西區   大涼里    Daliang Vil.        D
+733 67000370022     臺南市   中西區   藥王里    Yaowang Vil.        D
+734 67000370022     臺南市   中西區   藥王里    Yaowang Vil.        D
+735 67000370022     臺南市   中西區   藥王里    Yaowang Vil.        D
+736 67000370022     臺南市   中西區   藥王里    Yaowang Vil.        D
+737 67000370022     臺南市   中西區   藥王里    Yaowang Vil.        D
+738 67000370025     臺南市   中西區   光賢里  Guangxian Vil.        D
+739 67000370025     臺南市   中西區   光賢里  Guangxian Vil.        D
+740 67000370025     臺南市   中西區   光賢里  Guangxian Vil.        D
+741 67000370025     臺南市   中西區   光賢里  Guangxian Vil.        D
+742 67000270015     臺南市   仁德區   二行里     Erxing Vil.        D
+743 67000270015     臺南市   仁德區   二行里     Erxing Vil.        D
+744 67000270015     臺南市   仁德區   二行里     Erxing Vil.        D
+745 67000270016     臺南市   仁德區   大甲里      Dajia Vil.        D
+746 67000270005     臺南市   仁德區   仁義里      Renyi Vil.        D
+747 67000270005     臺南市   仁德區   仁義里      Renyi Vil.        D
+748 67000270005     臺南市   仁德區   仁義里      Renyi Vil.        D
+749 67000270005     臺南市   仁德區   仁義里      Renyi Vil.        D
+750 67000270005     臺南市   仁德區   仁義里      Renyi Vil.        D
+751 67000270005     臺南市   仁德區   仁義里      Renyi Vil.        D
+752 67000270002     臺南市   仁德區   土庫里       Tuku Vil.        D
+753 67000270002     臺南市   仁德區   土庫里       Tuku Vil.        D
+754 67000270001     臺南市   仁德區   太子里      Taizi Vil.        D
+755 67000350007     臺南市   安南區   安西里       Anxi Vil.        D
+756 67000350007     臺南市   安南區   安西里       Anxi Vil.        D
+757 67000350007     臺南市   安南區   安西里       Anxi Vil.        D
+758 67000350007     臺南市   安南區   安西里       Anxi Vil.        D
+759 67000350051     臺南市   安南區   大安里      Da'an Vil.        D
+760 67000350051     臺南市   安南區   大安里      Da'an Vil.        D
+761 67000350037     臺南市   安南區   安和里       Anhe Vil.        D
+762 67000350037     臺南市   安南區   安和里       Anhe Vil.        D
+763 67000350037     臺南市   安南區   安和里       Anhe Vil.        D
+764 67000350045     臺南市   安南區   理想里    Lixiang Vil.        D
+765 67000350045     臺南市   安南區   理想里    Lixiang Vil.        D
+766 67000350045     臺南市   安南區   理想里    Lixiang Vil.        D
+767 67000350009     臺南市   安南區   安慶里     Anqing Vil.        D
+768 67000350009     臺南市   安南區   安慶里     Anqing Vil.        D
+769 67000350009     臺南市   安南區   安慶里     Anqing Vil.        D
+770 67000350009     臺南市   安南區   安慶里     Anqing Vil.        D
+771 67000350044     臺南市   安南區   梅花里     Meihua Vil.        D
+772 67000350044     臺南市   安南區   梅花里     Meihua Vil.        D
+773 67000350008     臺南市   安南區   頂安里    Ding'an Vil.        D
+774 67000350008     臺南市   安南區   頂安里    Ding'an Vil.        D
+775 67000350008     臺南市   安南區   頂安里    Ding'an Vil.        D
+776 67000350002     臺南市   安南區   安順里     Anshun Vil.        D
+777 67000350002     臺南市   安南區   安順里     Anshun Vil.        D
+778 67000350012     臺南市   安南區   總頭里    Zongtou Vil.        D
+779 67000350011     臺南市   安南區   原佃里   Yuandian Vil.        D
+780 67000350001     臺南市   安南區   東和里     Donghe Vil.        D
+781 67000350001     臺南市   安南區   東和里     Donghe Vil.        D
+782 67000310028     臺南市   永康區   光復里    Guangfu Vil.        D
+783 67000310026     臺南市   永康區   勝利里    Shengli Vil.        D
+784 67000310026     臺南市   永康區   勝利里    Shengli Vil.        D
+785 67000310026     臺南市   永康區   勝利里    Shengli Vil.        D
+786 67000310026     臺南市   永康區   勝利里    Shengli Vil.        D
+787 67000310026     臺南市   永康區   勝利里    Shengli Vil.        D
+788 67000310026     臺南市   永康區   勝利里    Shengli Vil.        D
+789 67000310026     臺南市   永康區   勝利里    Shengli Vil.        D
+790 67000310026     臺南市   永康區   勝利里    Shengli Vil.        D
+791 67000310026     臺南市   永康區   勝利里    Shengli Vil.        D
+792 67000310026     臺南市   永康區   勝利里    Shengli Vil.        D
+793 67000310021     臺南市   永康區   建國里    Jianguo Vil.        D
+794 67000310021     臺南市   永康區   建國里    Jianguo Vil.        D
+795 67000310021     臺南市   永康區   建國里    Jianguo Vil.        D
+796 67000310031     臺南市   永康區   六合里      Liuhe Vil.        D
+797 67000310031     臺南市   永康區   六合里      Liuhe Vil.        D
+798 67000310031     臺南市   永康區   六合里      Liuhe Vil.        D
+799 67000310031     臺南市   永康區   六合里      Liuhe Vil.        D
+800 67000350021     臺南市   安南區   淵西里     Yuanxi Vil.        D
+801 67000350013     臺南市   安南區   長安里   Chang'an Vil.        D
+802 67000350013     臺南市   安南區   長安里   Chang'an Vil.        D
+803 67000310039     臺南市   永康區   中華里   Zhonghua Vil.        D
+804 67000310039     臺南市   永康區   中華里   Zhonghua Vil.        D
+805 67000310039     臺南市   永康區   中華里   Zhonghua Vil.        D
+806 67000310039     臺南市   永康區   中華里   Zhonghua Vil.        D
+807 67000310024     臺南市   永康區   成功里  Chenggong Vil.        D
+808 67000310024     臺南市   永康區   成功里  Chenggong Vil.        D
+809 67000310024     臺南市   永康區   成功里  Chenggong Vil.        D
+810 67000310024     臺南市   永康區   成功里  Chenggong Vil.        D
+811 67000310024     臺南市   永康區   成功里  Chenggong Vil.        D
+812 67000310025     臺南市   永康區   中興里  Zhongxing Vil.        D
+813 67000310025     臺南市   永康區   中興里  Zhongxing Vil.        D
+814 67000310025     臺南市   永康區   中興里  Zhongxing Vil.        D
+815 67000310025     臺南市   永康區   中興里  Zhongxing Vil.        D
+816 67000310025     臺南市   永康區   中興里  Zhongxing Vil.        D
+817 67000310025     臺南市   永康區   中興里  Zhongxing Vil.        D
+818 67000310025     臺南市   永康區   中興里  Zhongxing Vil.        D
+819 67000310025     臺南市   永康區   中興里  Zhongxing Vil.        D
+820 67000310023     臺南市   永康區   西勢里      Xishi Vil.        D
+821 67000310023     臺南市   永康區   西勢里      Xishi Vil.        D
+822 67000310023     臺南市   永康區   西勢里      Xishi Vil.        D
+823 67000310008     臺南市   永康區   蔦松里   Niaosong Vil.        D
+824 67000350034     臺南市   安南區   顯宮里   Xiangong Vil.        D
+825 67000350004     臺南市   安南區   州南里    Zhounan Vil.        D
+826 67000350004     臺南市   安南區   州南里    Zhounan Vil.        D
+827 67000350048     臺南市   安南區   布袋里      Budai Vil.        D
+828 67000350048     臺南市   安南區   布袋里      Budai Vil.        D
+829 67000350048     臺南市   安南區   布袋里      Budai Vil.        D
+830 67000350048     臺南市   安南區   布袋里      Budai Vil.        D
+831 67000350048     臺南市   安南區   布袋里      Budai Vil.        D
+832 67000350048     臺南市   安南區   布袋里      Budai Vil.        D
+833 67000350048     臺南市   安南區   布袋里      Budai Vil.        D
+834 67000350048     臺南市   安南區   布袋里      Budai Vil.        D
+835 67000350048     臺南市   安南區   布袋里      Budai Vil.        D
+836 67000350048     臺南市   安南區   布袋里      Budai Vil.        D
+837 67000350005     臺南市   安南區   州北里    Zhoubei Vil.        D
+838 67000350003     臺南市   安南區   塭南里     Wennan Vil.        D
+839 67000350024     臺南市   安南區   公塭里    Gongwen Vil.        D
+840 67000350025     臺南市   安南區   南興里    Nanxing Vil.        D
+841 67000350025     臺南市   安南區   南興里    Nanxing Vil.        D
+842 67000350025     臺南市   安南區   南興里    Nanxing Vil.        D
+843 67000350025     臺南市   安南區   南興里    Nanxing Vil.        D
+844 67000350025     臺南市   安南區   南興里    Nanxing Vil.        D
+845 67000350025     臺南市   安南區   南興里    Nanxing Vil.        D
+846 67000350025     臺南市   安南區   南興里    Nanxing Vil.        D
+847 67000350025     臺南市   安南區   南興里    Nanxing Vil.        D
+848 67000350025     臺南市   安南區   南興里    Nanxing Vil.        D
+849 67000350025     臺南市   安南區   南興里    Nanxing Vil.        D
+850 67000350025     臺南市   安南區   南興里    Nanxing Vil.        D
+851 67000360012     臺南市   安平區   億載里      Yizai Vil.        D
+852 67000360012     臺南市   安平區   億載里      Yizai Vil.        D
+853 67000360012     臺南市   安平區   億載里      Yizai Vil.        D
+854 67000360008     臺南市   安平區   平通里   Pingtong Vil.        D
+855 67000360008     臺南市   安平區   平通里   Pingtong Vil.        D
+856 67000360008     臺南市   安平區   平通里   Pingtong Vil.        D
+857 67000360008     臺南市   安平區   平通里   Pingtong Vil.        D
+858 67000350015     臺南市   安南區   海東里    Haidong Vil.        D
+859 67000350015     臺南市   安南區   海東里    Haidong Vil.        D
+    COUNTYCODE TOWNID TOWNCODE NOTE 周 num_dengue_cases
+1        67000    D06 67000350 &lt;NA&gt; NA                0
+2        67000    D32 67000270 &lt;NA&gt; 40                1
+3        67000    D32 67000270 &lt;NA&gt; 44                1
+4        67000    D32 67000270 &lt;NA&gt; 49                1
+5        67000    D08 67000370 &lt;NA&gt; 44                4
+6        67000    D08 67000370 &lt;NA&gt; 45                9
+7        67000    D08 67000370 &lt;NA&gt; 46                2
+8        67000    D08 67000370 &lt;NA&gt; 48                3
+9        67000    D08 67000370 &lt;NA&gt; 49                4
+10       67000    D02 67000330 &lt;NA&gt; 42                1
+11       67000    D02 67000330 &lt;NA&gt; 44                1
+12       67000    D02 67000330 &lt;NA&gt; 45                1
+13       67000    D02 67000330 &lt;NA&gt; 46                2
+14       67000    D06 67000350 &lt;NA&gt; NA                0
+15       67000    D06 67000350 &lt;NA&gt; 50                1
+16       67000    D08 67000370 &lt;NA&gt; 46                1
+17       67000    D08 67000370 &lt;NA&gt; 49                1
+18       67000    D08 67000370 &lt;NA&gt; 50                1
+19       67000    D06 67000350 &lt;NA&gt; 44                1
+20       67000    D06 67000350 &lt;NA&gt; 45                2
+21       67000    D06 67000350 &lt;NA&gt; 45                2
+22       67000    D06 67000350 &lt;NA&gt; 44                1
+23       67000    D06 67000350 &lt;NA&gt; 45                3
+24       67000    D06 67000350 &lt;NA&gt; 46                1
+25       67000    D06 67000350 &lt;NA&gt; 49                1
+26       67000    D06 67000350 &lt;NA&gt; 38                1
+27       67000    D06 67000350 &lt;NA&gt; 45                1
+28       67000    D06 67000350 &lt;NA&gt; 49                1
+29       67000    D06 67000350 &lt;NA&gt; NA                0
+30       67000    D06 67000350 &lt;NA&gt; 45                1
+31       67000    D06 67000350 &lt;NA&gt; 34                1
+32       67000    D06 67000350 &lt;NA&gt; 45                1
+33       67000    D39 67000310 &lt;NA&gt; 43                1
+34       67000    D39 67000310 &lt;NA&gt; 44                1
+35       67000    D39 67000310 &lt;NA&gt; 45                1
+36       67000    D39 67000310 &lt;NA&gt; 47                1
+37       67000    D39 67000310 &lt;NA&gt; 44                2
+38       67000    D39 67000310 &lt;NA&gt; 45                2
+39       67000    D39 67000310 &lt;NA&gt; 46                3
+40       67000    D39 67000310 &lt;NA&gt; 44                1
+41       67000    D39 67000310 &lt;NA&gt; 45                2
+42       67000    D39 67000310 &lt;NA&gt; 46                3
+43       67000    D39 67000310 &lt;NA&gt; 47                6
+44       67000    D39 67000310 &lt;NA&gt; 48                2
+45       67000    D39 67000310 &lt;NA&gt; 32                1
+46       67000    D39 67000310 &lt;NA&gt; 44                1
+47       67000    D39 67000310 &lt;NA&gt; 45                2
+48       67000    D39 67000310 &lt;NA&gt; 46                1
+49       67000    D39 67000310 &lt;NA&gt; 38                1
+50       67000    D39 67000310 &lt;NA&gt; 44                2
+51       67000    D39 67000310 &lt;NA&gt; 45                7
+52       67000    D39 67000310 &lt;NA&gt; 46                2
+53       67000    D39 67000310 &lt;NA&gt; 47                3
+54       67000    D39 67000310 &lt;NA&gt; 49                1
+55       67000    D39 67000310 &lt;NA&gt; 43                2
+56       67000    D39 67000310 &lt;NA&gt; 44                2
+57       67000    D39 67000310 &lt;NA&gt; 45                4
+58       67000    D39 67000310 &lt;NA&gt; 47                6
+59       67000    D39 67000310 &lt;NA&gt; 50                1
+60       67000    D39 67000310 &lt;NA&gt; 44                4
+61       67000    D39 67000310 &lt;NA&gt; 45                2
+62       67000    D39 67000310 &lt;NA&gt; 46                2
+63       67000    D39 67000310 &lt;NA&gt; 47                3
+64       67000    D39 67000310 &lt;NA&gt; 44                4
+65       67000    D39 67000310 &lt;NA&gt; 45                1
+66       67000    D39 67000310 &lt;NA&gt; 46                1
+67       67000    D39 67000310 &lt;NA&gt; 47                3
+68       67000    D39 67000310 &lt;NA&gt; 48                1
+69       67000    D39 67000310 &lt;NA&gt; 43                1
+70       67000    D39 67000310 &lt;NA&gt; 44                6
+71       67000    D39 67000310 &lt;NA&gt; 45                4
+72       67000    D39 67000310 &lt;NA&gt; 46                4
+73       67000    D39 67000310 &lt;NA&gt; 47                2
+74       67000    D39 67000310 &lt;NA&gt; 49                2
+75       67000    D39 67000310 &lt;NA&gt; 44                3
+76       67000    D39 67000310 &lt;NA&gt; 45                1
+77       67000    D39 67000310 &lt;NA&gt; 46                1
+78       67000    D39 67000310 &lt;NA&gt; 49                1
+79       67000    D39 67000310 &lt;NA&gt; 50                1
+80       67000    D39 67000310 &lt;NA&gt; NA                0
+81       67000    D39 67000310 &lt;NA&gt; 50                1
+82       67000    D01 67000320 &lt;NA&gt; 40                2
+83       67000    D01 67000320 &lt;NA&gt; 43                1
+84       67000    D01 67000320 &lt;NA&gt; 44                4
+85       67000    D01 67000320 &lt;NA&gt; 45                1
+86       67000    D01 67000320 &lt;NA&gt; 43                1
+87       67000    D01 67000320 &lt;NA&gt; 44                2
+88       67000    D01 67000320 &lt;NA&gt; 45                6
+89       67000    D01 67000320 &lt;NA&gt; 47                1
+90       67000    D01 67000320 &lt;NA&gt; 40                3
+91       67000    D01 67000320 &lt;NA&gt; 44                3
+92       67000    D01 67000320 &lt;NA&gt; 45                1
+93       67000    D01 67000320 &lt;NA&gt; 40                1
+94       67000    D01 67000320 &lt;NA&gt; 44                3
+95       67000    D01 67000320 &lt;NA&gt; 45                4
+96       67000    D01 67000320 &lt;NA&gt; 49                1
+97       67000    D01 67000320 &lt;NA&gt; 38                1
+98       67000    D01 67000320 &lt;NA&gt; 43                1
+99       67000    D01 67000320 &lt;NA&gt; 38                1
+100      67000    D01 67000320 &lt;NA&gt; 40                2
+101      67000    D01 67000320 &lt;NA&gt; 44                1
+102      67000    D01 67000320 &lt;NA&gt; 45                6
+103      67000    D01 67000320 &lt;NA&gt; 50                1
+104      67000    D01 67000320 &lt;NA&gt; NA                0
+105      67000    D01 67000320 &lt;NA&gt; 45                2
+106      67000    D01 67000320 &lt;NA&gt; 49                2
+107      67000    D01 67000320 &lt;NA&gt; 50                1
+108      67000    D01 67000320 &lt;NA&gt; 40                1
+109      67000    D01 67000320 &lt;NA&gt; 44                4
+110      67000    D01 67000320 &lt;NA&gt; 45               11
+111      67000    D01 67000320 &lt;NA&gt; 46                1
+112      67000    D01 67000320 &lt;NA&gt; 48                1
+113      67000    D01 67000320 &lt;NA&gt; 39                1
+114      67000    D01 67000320 &lt;NA&gt; 44                5
+115      67000    D01 67000320 &lt;NA&gt; 45                9
+116      67000    D01 67000320 &lt;NA&gt; 50                1
+117      67000    D01 67000320 &lt;NA&gt; 39                1
+118      67000    D01 67000320 &lt;NA&gt; 40                1
+119      67000    D01 67000320 &lt;NA&gt; 44                1
+120      67000    D01 67000320 &lt;NA&gt; 45               10
+121      67000    D01 67000320 &lt;NA&gt; 46                1
+122      67000    D01 67000320 &lt;NA&gt; 48                1
+123      67000    D01 67000320 &lt;NA&gt; 40                1
+124      67000    D01 67000320 &lt;NA&gt; 44                4
+125      67000    D01 67000320 &lt;NA&gt; 45                3
+126      67000    D01 67000320 &lt;NA&gt; 40                1
+127      67000    D01 67000320 &lt;NA&gt; 45                2
+128      67000    D01 67000320 &lt;NA&gt; 50                1
+129      67000    D01 67000320 &lt;NA&gt; 34                1
+130      67000    D01 67000320 &lt;NA&gt; 44                2
+131      67000    D01 67000320 &lt;NA&gt; 45                6
+132      67000    D01 67000320 &lt;NA&gt; 34                1
+133      67000    D01 67000320 &lt;NA&gt; 44                1
+134      67000    D01 67000320 &lt;NA&gt; 45                1
+135      67000    D01 67000320 &lt;NA&gt; 40                1
+136      67000    D01 67000320 &lt;NA&gt; 43                2
+137      67000    D01 67000320 &lt;NA&gt; 44                6
+138      67000    D01 67000320 &lt;NA&gt; 45               13
+139      67000    D01 67000320 &lt;NA&gt; 46                3
+140      67000    D01 67000320 &lt;NA&gt; 50                1
+141      67000    D01 67000320 &lt;NA&gt; 40                1
+142      67000    D01 67000320 &lt;NA&gt; 44                1
+143      67000    D01 67000320 &lt;NA&gt; 45                5
+144      67000    D01 67000320 &lt;NA&gt; 49                1
+145      67000    D01 67000320 &lt;NA&gt; 40                2
+146      67000    D01 67000320 &lt;NA&gt; 42                1
+147      67000    D01 67000320 &lt;NA&gt; 44                1
+148      67000    D01 67000320 &lt;NA&gt; 45                2
+149      67000    D01 67000320 &lt;NA&gt; 48                1
+150      67000    D01 67000320 &lt;NA&gt; 44                2
+151      67000    D01 67000320 &lt;NA&gt; 45                2
+152      67000    D01 67000320 &lt;NA&gt; 46                1
+153      67000    D01 67000320 &lt;NA&gt; 49                1
+154      67000    D01 67000320 &lt;NA&gt; 37                1
+155      67000    D01 67000320 &lt;NA&gt; 41                1
+156      67000    D01 67000320 &lt;NA&gt; 44                2
+157      67000    D01 67000320 &lt;NA&gt; 45                2
+158      67000    D01 67000320 &lt;NA&gt; 49                1
+159      67000    D01 67000320 &lt;NA&gt; 50                1
+160      67000    D01 67000320 &lt;NA&gt; 40                5
+161      67000    D01 67000320 &lt;NA&gt; 42                2
+162      67000    D01 67000320 &lt;NA&gt; 43                1
+163      67000    D01 67000320 &lt;NA&gt; 45                1
+164      67000    D01 67000320 &lt;NA&gt; 46                3
+165      67000    D01 67000320 &lt;NA&gt; 47                1
+166      67000    D01 67000320 &lt;NA&gt; 37                1
+167      67000    D01 67000320 &lt;NA&gt; 40                1
+168      67000    D01 67000320 &lt;NA&gt; 42                1
+169      67000    D01 67000320 &lt;NA&gt; 43                1
+170      67000    D01 67000320 &lt;NA&gt; 44                6
+171      67000    D01 67000320 &lt;NA&gt; 45                7
+172      67000    D01 67000320 &lt;NA&gt; 47                1
+173      67000    D01 67000320 &lt;NA&gt; 50                2
+174      67000    D01 67000320 &lt;NA&gt; 40                1
+175      67000    D01 67000320 &lt;NA&gt; 45                9
+176      67000    D01 67000320 &lt;NA&gt; 44                1
+177      67000    D01 67000320 &lt;NA&gt; 45                2
+178      67000    D01 67000320 &lt;NA&gt; 49                1
+179      67000    D01 67000320 &lt;NA&gt; 40                1
+180      67000    D01 67000320 &lt;NA&gt; 44                1
+181      67000    D01 67000320 &lt;NA&gt; 40                1
+182      67000    D01 67000320 &lt;NA&gt; 44                2
+183      67000    D01 67000320 &lt;NA&gt; 45                3
+184      67000    D01 67000320 &lt;NA&gt; 48                1
+185      67000    D01 67000320 &lt;NA&gt; 49                2
+186      67000    D01 67000320 &lt;NA&gt; 44                1
+187      67000    D01 67000320 &lt;NA&gt; 45                1
+188      67000    D01 67000320 &lt;NA&gt; 34                2
+189      67000    D01 67000320 &lt;NA&gt; 37                1
+190      67000    D01 67000320 &lt;NA&gt; 39                1
+191      67000    D01 67000320 &lt;NA&gt; 40                4
+192      67000    D01 67000320 &lt;NA&gt; 44                2
+193      67000    D01 67000320 &lt;NA&gt; 45                5
+194      67000    D01 67000320 &lt;NA&gt; 49                1
+195      67000    D01 67000320 &lt;NA&gt; 40                1
+196      67000    D01 67000320 &lt;NA&gt; 44                2
+197      67000    D01 67000320 &lt;NA&gt; 45                3
+198      67000    D01 67000320 &lt;NA&gt; 40                1
+199      67000    D01 67000320 &lt;NA&gt; 45                4
+200      67000    D01 67000320 &lt;NA&gt; 40                2
+201      67000    D01 67000320 &lt;NA&gt; 44                1
+202      67000    D01 67000320 &lt;NA&gt; 40                1
+203      67000    D01 67000320 &lt;NA&gt; 46                2
+204      67000    D01 67000320 &lt;NA&gt; 40                2
+205      67000    D01 67000320 &lt;NA&gt; 44                1
+206      67000    D01 67000320 &lt;NA&gt; 46                1
+207      67000    D01 67000320 &lt;NA&gt; 45                2
+208      67000    D01 67000320 &lt;NA&gt; 46                1
+209      67000    D01 67000320 &lt;NA&gt; 36                1
+210      67000    D01 67000320 &lt;NA&gt; 40                3
+211      67000    D01 67000320 &lt;NA&gt; 42                1
+212      67000    D01 67000320 &lt;NA&gt; 44                4
+213      67000    D01 67000320 &lt;NA&gt; 45                4
+214      67000    D01 67000320 &lt;NA&gt; 46                2
+215      67000    D01 67000320 &lt;NA&gt; 33                1
+216      67000    D01 67000320 &lt;NA&gt; 36                1
+217      67000    D01 67000320 &lt;NA&gt; 39                1
+218      67000    D01 67000320 &lt;NA&gt; 40                1
+219      67000    D01 67000320 &lt;NA&gt; 44                7
+220      67000    D01 67000320 &lt;NA&gt; 45                4
+221      67000    D01 67000320 &lt;NA&gt; 49                1
+222      67000    D01 67000320 &lt;NA&gt; 40                1
+223      67000    D01 67000320 &lt;NA&gt; 44                4
+224      67000    D01 67000320 &lt;NA&gt; 45                4
+225      67000    D01 67000320 &lt;NA&gt; 40                1
+226      67000    D01 67000320 &lt;NA&gt; 44                7
+227      67000    D01 67000320 &lt;NA&gt; 45                4
+228      67000    D01 67000320 &lt;NA&gt; 49                1
+229      67000    D01 67000320 &lt;NA&gt; 44                2
+230      67000    D01 67000320 &lt;NA&gt; 45                3
+231      67000    D01 67000320 &lt;NA&gt; 40                1
+232      67000    D01 67000320 &lt;NA&gt; 44                2
+233      67000    D01 67000320 &lt;NA&gt; 45                3
+234      67000    D04 67000340 &lt;NA&gt; 40                6
+235      67000    D04 67000340 &lt;NA&gt; 45                3
+236      67000    D04 67000340 &lt;NA&gt; 50                1
+237      67000    D04 67000340 &lt;NA&gt; 34                1
+238      67000    D04 67000340 &lt;NA&gt; 36                1
+239      67000    D04 67000340 &lt;NA&gt; 40                5
+240      67000    D04 67000340 &lt;NA&gt; 45                1
+241      67000    D04 67000340 &lt;NA&gt; 48                1
+242      67000    D04 67000340 &lt;NA&gt; 50                1
+243      67000    D04 67000340 &lt;NA&gt; 40                1
+244      67000    D04 67000340 &lt;NA&gt; 44                1
+245      67000    D04 67000340 &lt;NA&gt; 45               18
+246      67000    D04 67000340 &lt;NA&gt; 49                1
+247      67000    D04 67000340 &lt;NA&gt; 40                7
+248      67000    D04 67000340 &lt;NA&gt; 44                2
+249      67000    D04 67000340 &lt;NA&gt; 45                3
+250      67000    D04 67000340 &lt;NA&gt; 49                1
+251      67000    D04 67000340 &lt;NA&gt; 40                8
+252      67000    D04 67000340 &lt;NA&gt; 44                2
+253      67000    D04 67000340 &lt;NA&gt; 45                7
+254      67000    D04 67000340 &lt;NA&gt; 40                4
+255      67000    D04 67000340 &lt;NA&gt; 44                5
+256      67000    D04 67000340 &lt;NA&gt; 45                9
+257      67000    D04 67000340 &lt;NA&gt; 49                1
+258      67000    D04 67000340 &lt;NA&gt; 36                1
+259      67000    D04 67000340 &lt;NA&gt; 40                9
+260      67000    D04 67000340 &lt;NA&gt; 44                2
+261      67000    D04 67000340 &lt;NA&gt; 45                6
+262      67000    D04 67000340 &lt;NA&gt; 48                1
+263      67000    D04 67000340 &lt;NA&gt; 49                1
+264      67000    D04 67000340 &lt;NA&gt; 50                1
+265      67000    D04 67000340 &lt;NA&gt; 40                3
+266      67000    D04 67000340 &lt;NA&gt; 44                2
+267      67000    D04 67000340 &lt;NA&gt; 45                7
+268      67000    D04 67000340 &lt;NA&gt; 46                4
+269      67000    D04 67000340 &lt;NA&gt; 47                1
+270      67000    D02 67000330 &lt;NA&gt; 42                1
+271      67000    D02 67000330 &lt;NA&gt; 43                2
+272      67000    D02 67000330 &lt;NA&gt; 44                2
+273      67000    D02 67000330 &lt;NA&gt; 45                2
+274      67000    D02 67000330 &lt;NA&gt; 46                5
+275      67000    D02 67000330 &lt;NA&gt; 47                1
+276      67000    D02 67000330 &lt;NA&gt; 48                2
+277      67000    D02 67000330 &lt;NA&gt; 44                1
+278      67000    D02 67000330 &lt;NA&gt; 45                1
+279      67000    D02 67000330 &lt;NA&gt; 47                3
+280      67000    D02 67000330 &lt;NA&gt; 49                1
+281      67000    D02 67000330 &lt;NA&gt; 50                1
+282      67000    D02 67000330 &lt;NA&gt; 43                1
+283      67000    D02 67000330 &lt;NA&gt; 44                1
+284      67000    D02 67000330 &lt;NA&gt; 45                1
+285      67000    D02 67000330 &lt;NA&gt; 46                2
+286      67000    D02 67000330 &lt;NA&gt; 47                3
+287      67000    D02 67000330 &lt;NA&gt; 48                1
+288      67000    D02 67000330 &lt;NA&gt; 50                1
+289      67000    D02 67000330 &lt;NA&gt; 44                1
+290      67000    D02 67000330 &lt;NA&gt; 45                1
+291      67000    D02 67000330 &lt;NA&gt; 47                1
+292      67000    D02 67000330 &lt;NA&gt; 45                1
+293      67000    D02 67000330 &lt;NA&gt; 46                1
+294      67000    D02 67000330 &lt;NA&gt; 47                1
+295      67000    D02 67000330 &lt;NA&gt; 44                1
+296      67000    D02 67000330 &lt;NA&gt; 46                1
+297      67000    D02 67000330 &lt;NA&gt; 48                1
+298      67000    D02 67000330 &lt;NA&gt; 44                2
+299      67000    D02 67000330 &lt;NA&gt; 46                1
+300      67000    D02 67000330 &lt;NA&gt; 44                2
+301      67000    D02 67000330 &lt;NA&gt; 45                3
+302      67000    D02 67000330 &lt;NA&gt; 46                1
+303      67000    D02 67000330 &lt;NA&gt; 47                1
+304      67000    D02 67000330 &lt;NA&gt; 44                4
+305      67000    D02 67000330 &lt;NA&gt; 45                1
+306      67000    D02 67000330 &lt;NA&gt; 40                1
+307      67000    D02 67000330 &lt;NA&gt; 44                2
+308      67000    D02 67000330 &lt;NA&gt; 45               16
+309      67000    D02 67000330 &lt;NA&gt; 46                6
+310      67000    D02 67000330 &lt;NA&gt; 47                4
+311      67000    D02 67000330 &lt;NA&gt; 48                1
+312      67000    D02 67000330 &lt;NA&gt; 49                2
+313      67000    D02 67000330 &lt;NA&gt; 50                1
+314      67000    D02 67000330 &lt;NA&gt; 38                1
+315      67000    D02 67000330 &lt;NA&gt; 44                2
+316      67000    D02 67000330 &lt;NA&gt; 45                4
+317      67000    D02 67000330 &lt;NA&gt; 46                1
+318      67000    D02 67000330 &lt;NA&gt; 48                1
+319      67000    D02 67000330 &lt;NA&gt; 50                1
+320      67000    D02 67000330 &lt;NA&gt; 37                1
+321      67000    D02 67000330 &lt;NA&gt; 44                2
+322      67000    D02 67000330 &lt;NA&gt; 45                1
+323      67000    D02 67000330 &lt;NA&gt; 46                4
+324      67000    D02 67000330 &lt;NA&gt; 47                1
+325      67000    D02 67000330 &lt;NA&gt; 44                5
+326      67000    D02 67000330 &lt;NA&gt; 45                9
+327      67000    D02 67000330 &lt;NA&gt; 46                5
+328      67000    D02 67000330 &lt;NA&gt; 47                1
+329      67000    D02 67000330 &lt;NA&gt; 49                1
+330      67000    D02 67000330 &lt;NA&gt; 43                1
+331      67000    D02 67000330 &lt;NA&gt; 44                2
+332      67000    D02 67000330 &lt;NA&gt; 45                1
+333      67000    D02 67000330 &lt;NA&gt; 46                2
+334      67000    D02 67000330 &lt;NA&gt; 47                2
+335      67000    D02 67000330 &lt;NA&gt; 48                1
+336      67000    D02 67000330 &lt;NA&gt; 50                1
+337      67000    D02 67000330 &lt;NA&gt; 40                2
+338      67000    D02 67000330 &lt;NA&gt; 45                2
+339      67000    D02 67000330 &lt;NA&gt; 50                1
+340      67000    D02 67000330 &lt;NA&gt; 41                1
+341      67000    D02 67000330 &lt;NA&gt; 44                2
+342      67000    D02 67000330 &lt;NA&gt; 45                3
+343      67000    D02 67000330 &lt;NA&gt; 47                5
+344      67000    D02 67000330 &lt;NA&gt; 45                1
+345      67000    D02 67000330 &lt;NA&gt; 47                1
+346      67000    D02 67000330 &lt;NA&gt; 42                1
+347      67000    D02 67000330 &lt;NA&gt; 44                1
+348      67000    D02 67000330 &lt;NA&gt; 45                5
+349      67000    D02 67000330 &lt;NA&gt; 46                2
+350      67000    D02 67000330 &lt;NA&gt; 47                2
+351      67000    D02 67000330 &lt;NA&gt; 41                1
+352      67000    D02 67000330 &lt;NA&gt; 45                1
+353      67000    D02 67000330 &lt;NA&gt; 47                2
+354      67000    D02 67000330 &lt;NA&gt; 40                2
+355      67000    D02 67000330 &lt;NA&gt; 44                1
+356      67000    D02 67000330 &lt;NA&gt; 47                1
+357      67000    D02 67000330 &lt;NA&gt; 48                1
+358      67000    D02 67000330 &lt;NA&gt; 49                1
+359      67000    D02 67000330 &lt;NA&gt; 40                1
+360      67000    D02 67000330 &lt;NA&gt; 44                2
+361      67000    D02 67000330 &lt;NA&gt; 45                2
+362      67000    D02 67000330 &lt;NA&gt; 46                1
+363      67000    D02 67000330 &lt;NA&gt; 47                2
+364      67000    D02 67000330 &lt;NA&gt; 48                1
+365      67000    D02 67000330 &lt;NA&gt; 45                1
+366      67000    D02 67000330 &lt;NA&gt; 46                2
+367      67000    D02 67000330 &lt;NA&gt; 48                1
+368      67000    D02 67000330 &lt;NA&gt; 46                1
+369      67000    D02 67000330 &lt;NA&gt; 49                1
+370      67000    D02 67000330 &lt;NA&gt; 47                1
+371      67000    D02 67000330 &lt;NA&gt; 40                1
+372      67000    D02 67000330 &lt;NA&gt; 44                4
+373      67000    D02 67000330 &lt;NA&gt; 45                4
+374      67000    D02 67000330 &lt;NA&gt; 46                2
+375      67000    D02 67000330 &lt;NA&gt; 47                2
+376      67000    D02 67000330 &lt;NA&gt; 48                1
+377      67000    D02 67000330 &lt;NA&gt; 45                1
+378      67000    D02 67000330 &lt;NA&gt; 46                2
+379      67000    D02 67000330 &lt;NA&gt; 38                2
+380      67000    D02 67000330 &lt;NA&gt; 40                2
+381      67000    D02 67000330 &lt;NA&gt; 44                1
+382      67000    D02 67000330 &lt;NA&gt; 45                8
+383      67000    D02 67000330 &lt;NA&gt; 46                3
+384      67000    D02 67000330 &lt;NA&gt; 47                4
+385      67000    D02 67000330 &lt;NA&gt; 48                3
+386      67000    D02 67000330 &lt;NA&gt; 49                1
+387      67000    D02 67000330 &lt;NA&gt; 50                2
+388      67000    D02 67000330 &lt;NA&gt; 43                1
+389      67000    D02 67000330 &lt;NA&gt; 44                3
+390      67000    D02 67000330 &lt;NA&gt; 45                8
+391      67000    D02 67000330 &lt;NA&gt; 46                4
+392      67000    D02 67000330 &lt;NA&gt; 47                3
+393      67000    D02 67000330 &lt;NA&gt; 48                1
+394      67000    D02 67000330 &lt;NA&gt; 49                2
+395      67000    D02 67000330 &lt;NA&gt; 44                4
+396      67000    D02 67000330 &lt;NA&gt; 45                2
+397      67000    D02 67000330 &lt;NA&gt; 46                3
+398      67000    D02 67000330 &lt;NA&gt; 47                5
+399      67000    D02 67000330 &lt;NA&gt; 48                1
+400      67000    D02 67000330 &lt;NA&gt; 49                1
+401      67000    D02 67000330 &lt;NA&gt; 43                1
+402      67000    D02 67000330 &lt;NA&gt; 44                1
+403      67000    D02 67000330 &lt;NA&gt; 45                8
+404      67000    D02 67000330 &lt;NA&gt; 46                6
+405      67000    D02 67000330 &lt;NA&gt; 47                1
+406      67000    D02 67000330 &lt;NA&gt; 40                1
+407      67000    D02 67000330 &lt;NA&gt; 44                2
+408      67000    D02 67000330 &lt;NA&gt; 45                3
+409      67000    D02 67000330 &lt;NA&gt; 46                3
+410      67000    D02 67000330 &lt;NA&gt; 47                1
+411      67000    D02 67000330 &lt;NA&gt; 48                1
+412      67000    D02 67000330 &lt;NA&gt; 49                1
+413      67000    D02 67000330 &lt;NA&gt; 44                1
+414      67000    D02 67000330 &lt;NA&gt; 45                3
+415      67000    D02 67000330 &lt;NA&gt; 46                1
+416      67000    D02 67000330 &lt;NA&gt; 47                2
+417      67000    D02 67000330 &lt;NA&gt; 48                2
+418      67000    D06 67000350 &lt;NA&gt; 44                1
+419      67000    D06 67000350 &lt;NA&gt; 45                7
+420      67000    D06 67000350 &lt;NA&gt; 48                1
+421      67000    D06 67000350 &lt;NA&gt; 35                1
+422      67000    D06 67000350 &lt;NA&gt; 44                1
+423      67000    D06 67000350 &lt;NA&gt; 45                2
+424      67000    D06 67000350 &lt;NA&gt; 48                1
+425      67000    D06 67000350 &lt;NA&gt; 49                1
+426      67000    D06 67000350 &lt;NA&gt; 44                3
+427      67000    D06 67000350 &lt;NA&gt; 45                3
+428      67000    D06 67000350 &lt;NA&gt; 46                1
+429      67000    D06 67000350 &lt;NA&gt; 49                1
+430      67000    D06 67000350 &lt;NA&gt; 36                1
+431      67000    D06 67000350 &lt;NA&gt; 44                2
+432      67000    D06 67000350 &lt;NA&gt; 45                4
+433      67000    D06 67000350 &lt;NA&gt; 34                1
+434      67000    D06 67000350 &lt;NA&gt; 45                1
+435      67000    D06 67000350 &lt;NA&gt; 36                1
+436      67000    D06 67000350 &lt;NA&gt; 44                5
+437      67000    D06 67000350 &lt;NA&gt; 45                3
+438      67000    D06 67000350 &lt;NA&gt; 45                2
+439      67000    D06 67000350 &lt;NA&gt; 45                3
+440      67000    D06 67000350 &lt;NA&gt; 45                1
+441      67000    D06 67000350 &lt;NA&gt; NA                0
+442      67000    D07 67000360 &lt;NA&gt; 40               15
+443      67000    D07 67000360 &lt;NA&gt; 41               12
+444      67000    D07 67000360 &lt;NA&gt; 44                1
+445      67000    D07 67000360 &lt;NA&gt; 45                4
+446      67000    D07 67000360 &lt;NA&gt; 48                1
+447      67000    D07 67000360 &lt;NA&gt; 40                7
+448      67000    D07 67000360 &lt;NA&gt; 41                6
+449      67000    D07 67000360 &lt;NA&gt; 44                1
+450      67000    D07 67000360 &lt;NA&gt; 45                4
+451      67000    D07 67000360 &lt;NA&gt; 49                1
+452      67000    D07 67000360 &lt;NA&gt; 40               10
+453      67000    D07 67000360 &lt;NA&gt; 41                6
+454      67000    D07 67000360 &lt;NA&gt; 44                1
+455      67000    D07 67000360 &lt;NA&gt; 45                2
+456      67000    D07 67000360 &lt;NA&gt; 49                1
+457      67000    D07 67000360 &lt;NA&gt; 38                1
+458      67000    D07 67000360 &lt;NA&gt; 40                8
+459      67000    D07 67000360 &lt;NA&gt; 41                3
+460      67000    D07 67000360 &lt;NA&gt; 44                2
+461      67000    D07 67000360 &lt;NA&gt; 45                9
+462      67000    D07 67000360 &lt;NA&gt; 49                1
+463      67000    D07 67000360 &lt;NA&gt; 40                8
+464      67000    D07 67000360 &lt;NA&gt; 41                4
+465      67000    D07 67000360 &lt;NA&gt; 44                1
+466      67000    D07 67000360 &lt;NA&gt; 45                4
+467      67000    D07 67000360 &lt;NA&gt; 49                4
+468      67000    D07 67000360 &lt;NA&gt; 50                1
+469      67000    D07 67000360 &lt;NA&gt; 38                1
+470      67000    D07 67000360 &lt;NA&gt; 40               11
+471      67000    D07 67000360 &lt;NA&gt; 41                5
+472      67000    D07 67000360 &lt;NA&gt; 44                1
+473      67000    D07 67000360 &lt;NA&gt; 45                4
+474      67000    D06 67000350 &lt;NA&gt; 36                1
+475      67000    D06 67000350 &lt;NA&gt; 38                1
+476      67000    D06 67000350 &lt;NA&gt; 44                1
+477      67000    D06 67000350 &lt;NA&gt; 45                4
+478      67000    D32 67000270 &lt;NA&gt; 40                1
+479      67000    D32 67000270 &lt;NA&gt; 45                3
+480      67000    D32 67000270 &lt;NA&gt; 49                1
+481      67000    D32 67000270 &lt;NA&gt; 50                1
+482      67000    D32 67000270 &lt;NA&gt; 44                1
+483      67000    D32 67000270 &lt;NA&gt; 45                4
+484      67000    D32 67000270 &lt;NA&gt; 46                1
+485      67000    D32 67000270 &lt;NA&gt; 40                3
+486      67000    D32 67000270 &lt;NA&gt; 44                2
+487      67000    D32 67000270 &lt;NA&gt; 45                7
+488      67000    D32 67000270 &lt;NA&gt; 46                4
+489      67000    D32 67000270 &lt;NA&gt; 47                1
+490      67000    D32 67000270 &lt;NA&gt; 44                4
+491      67000    D32 67000270 &lt;NA&gt; 45                4
+492      67000    D32 67000270 &lt;NA&gt; 46                1
+493      67000    D32 67000270 &lt;NA&gt; 40                9
+494      67000    D32 67000270 &lt;NA&gt; 43                1
+495      67000    D32 67000270 &lt;NA&gt; 44                1
+496      67000    D32 67000270 &lt;NA&gt; 45                9
+497      67000    D32 67000270 &lt;NA&gt; 40                1
+498      67000    D32 67000270 &lt;NA&gt; 44                1
+499      67000    D32 67000270 &lt;NA&gt; 45                3
+500      67000    D02 67000330 &lt;NA&gt; 45                3
+501      67000    D02 67000330 &lt;NA&gt; 46                1
+502      67000    D02 67000330 &lt;NA&gt; 48                1
+503      67000    D02 67000330 &lt;NA&gt; 49                1
+504      67000    D02 67000330 &lt;NA&gt; 44                1
+505      67000    D02 67000330 &lt;NA&gt; 45                2
+506      67000    D02 67000330 &lt;NA&gt; 46                2
+507      67000    D32 67000270 &lt;NA&gt; 44                1
+508      67000    D32 67000270 &lt;NA&gt; 44                1
+509      67000    D32 67000270 &lt;NA&gt; 45                5
+510      67000    D32 67000270 &lt;NA&gt; 46                1
+511      67000    D32 67000270 &lt;NA&gt; 49                2
+512      67000    D01 67000320 &lt;NA&gt; 43                1
+513      67000    D01 67000320 &lt;NA&gt; 44                1
+514      67000    D01 67000320 &lt;NA&gt; 45                6
+515      67000    D01 67000320 &lt;NA&gt; 49                1
+516      67000    D01 67000320 &lt;NA&gt; 44                4
+517      67000    D01 67000320 &lt;NA&gt; 45                4
+518      67000    D01 67000320 &lt;NA&gt; 46                1
+519      67000    D32 67000270 &lt;NA&gt; 44                1
+520      67000    D32 67000270 &lt;NA&gt; 45                1
+521      67000    D39 67000310 &lt;NA&gt; 44                2
+522      67000    D39 67000310 &lt;NA&gt; 45                5
+523      67000    D39 67000310 &lt;NA&gt; 46                1
+524      67000    D39 67000310 &lt;NA&gt; 44                2
+525      67000    D39 67000310 &lt;NA&gt; 46                5
+526      67000    D39 67000310 &lt;NA&gt; 47                1
+527      67000    D39 67000310 &lt;NA&gt; 48                1
+528      67000    D39 67000310 &lt;NA&gt; 45                1
+529      67000    D39 67000310 &lt;NA&gt; 46                3
+530      67000    D39 67000310 &lt;NA&gt; 47                1
+531      67000    D39 67000310 &lt;NA&gt; 36                1
+532      67000    D39 67000310 &lt;NA&gt; 44                4
+533      67000    D39 67000310 &lt;NA&gt; 45                7
+534      67000    D39 67000310 &lt;NA&gt; 46                3
+535      67000    D39 67000310 &lt;NA&gt; 47                2
+536      67000    D39 67000310 &lt;NA&gt; 48                1
+537      67000    D39 67000310 &lt;NA&gt; 49                2
+538      67000    D07 67000360 &lt;NA&gt; NA                0
+539      67000    D07 67000360 &lt;NA&gt; 40                5
+540      67000    D07 67000360 &lt;NA&gt; 41                2
+541      67000    D07 67000360 &lt;NA&gt; 45                3
+542      67000    D39 67000310 &lt;NA&gt; 44                2
+543      67000    D39 67000310 &lt;NA&gt; 45                4
+544      67000    D39 67000310 &lt;NA&gt; 46                3
+545      67000    D39 67000310 &lt;NA&gt; 40                1
+546      67000    D39 67000310 &lt;NA&gt; 43                2
+547      67000    D39 67000310 &lt;NA&gt; 44                6
+548      67000    D39 67000310 &lt;NA&gt; 45               13
+549      67000    D39 67000310 &lt;NA&gt; 46                3
+550      67000    D39 67000310 &lt;NA&gt; 50                1
+551      67000    D39 67000310 &lt;NA&gt; 46                1
+552      67000    D39 67000310 &lt;NA&gt; 38                1
+553      67000    D39 67000310 &lt;NA&gt; 40                1
+554      67000    D39 67000310 &lt;NA&gt; 44                5
+555      67000    D39 67000310 &lt;NA&gt; 45                8
+556      67000    D39 67000310 &lt;NA&gt; 46                3
+557      67000    D39 67000310 &lt;NA&gt; 47                2
+558      67000    D39 67000310 &lt;NA&gt; 48                2
+559      67000    D39 67000310 &lt;NA&gt; 42                1
+560      67000    D39 67000310 &lt;NA&gt; 44                2
+561      67000    D39 67000310 &lt;NA&gt; 45                3
+562      67000    D39 67000310 &lt;NA&gt; 46                1
+563      67000    D39 67000310 &lt;NA&gt; 50                1
+564      67000    D39 67000310 &lt;NA&gt; 36                2
+565      67000    D39 67000310 &lt;NA&gt; 39                1
+566      67000    D39 67000310 &lt;NA&gt; 40                1
+567      67000    D39 67000310 &lt;NA&gt; 42                1
+568      67000    D39 67000310 &lt;NA&gt; 43                1
+569      67000    D39 67000310 &lt;NA&gt; 44               13
+570      67000    D39 67000310 &lt;NA&gt; 45               10
+571      67000    D39 67000310 &lt;NA&gt; 46                1
+572      67000    D39 67000310 &lt;NA&gt; 48                1
+573      67000    D39 67000310 &lt;NA&gt; 49                1
+574      67000    D39 67000310 &lt;NA&gt; 50                1
+575      67000    D39 67000310 &lt;NA&gt; 40                3
+576      67000    D39 67000310 &lt;NA&gt; 44                3
+577      67000    D39 67000310 &lt;NA&gt; 45                6
+578      67000    D39 67000310 &lt;NA&gt; 46                2
+579      67000    D39 67000310 &lt;NA&gt; 47                1
+580      67000    D39 67000310 &lt;NA&gt; 48                1
+581      67000    D39 67000310 &lt;NA&gt; 50                1
+582      67000    D01 67000320 &lt;NA&gt; 38                1
+583      67000    D01 67000320 &lt;NA&gt; 40                1
+584      67000    D01 67000320 &lt;NA&gt; 44                2
+585      67000    D01 67000320 &lt;NA&gt; 45                4
+586      67000    D01 67000320 &lt;NA&gt; 48                2
+587      67000    D02 67000330 &lt;NA&gt; 42                1
+588      67000    D02 67000330 &lt;NA&gt; 44                3
+589      67000    D02 67000330 &lt;NA&gt; 45                8
+590      67000    D02 67000330 &lt;NA&gt; 46                3
+591      67000    D08 67000370 &lt;NA&gt; 40                1
+592      67000    D08 67000370 &lt;NA&gt; 44                3
+593      67000    D08 67000370 &lt;NA&gt; 45                4
+594      67000    D07 67000360 &lt;NA&gt; 40                2
+595      67000    D07 67000360 &lt;NA&gt; 44                3
+596      67000    D07 67000360 &lt;NA&gt; 45                2
+597      67000    D07 67000360 &lt;NA&gt; 48                1
+598      67000    D08 67000370 &lt;NA&gt; 44                2
+599      67000    D08 67000370 &lt;NA&gt; 45                5
+600      67000    D06 67000350 &lt;NA&gt; NA                0
+601      67000    D06 67000350 &lt;NA&gt; 44                1
+602      67000    D06 67000350 &lt;NA&gt; 45                7
+603      67000    D06 67000350 &lt;NA&gt; 48                2
+604      67000    D06 67000350 &lt;NA&gt; 44                1
+605      67000    D06 67000350 &lt;NA&gt; 45                1
+606      67000    D06 67000350 &lt;NA&gt; 46                1
+607      67000    D06 67000350 &lt;NA&gt; 45                1
+608      67000    D06 67000350 &lt;NA&gt; 50                1
+609      67000    D06 67000350 &lt;NA&gt; 45                1
+610      67000    D06 67000350 &lt;NA&gt; 46                1
+611      67000    D06 67000350 &lt;NA&gt; 48                5
+612      67000    D06 67000350 &lt;NA&gt; 49                1
+613      67000    D06 67000350 &lt;NA&gt; 50                1
+614      67000    D39 67000310 &lt;NA&gt; NA                0
+615      67000    D39 67000310 &lt;NA&gt; 40                1
+616      67000    D39 67000310 &lt;NA&gt; 44                2
+617      67000    D39 67000310 &lt;NA&gt; 45               10
+618      67000    D39 67000310 &lt;NA&gt; 46                2
+619      67000    D39 67000310 &lt;NA&gt; 47                3
+620      67000    D39 67000310 &lt;NA&gt; 48                3
+621      67000    D39 67000310 &lt;NA&gt; 49                2
+622      67000    D39 67000310 &lt;NA&gt; 50                1
+623      67000    D06 67000350 &lt;NA&gt; NA                0
+624      67000    D06 67000350 &lt;NA&gt; 45                2
+625      67000    D06 67000350 &lt;NA&gt; 49                1
+626      67000    D06 67000350 &lt;NA&gt; 43                1
+627      67000    D06 67000350 &lt;NA&gt; 49                1
+628      67000    D06 67000350 &lt;NA&gt; 50                1
+629      67000    D32 67000270 &lt;NA&gt; NA                0
+630      67000    D39 67000310 &lt;NA&gt; NA                0
+631      67000    D39 67000310 &lt;NA&gt; NA                0
+632      67000    D02 67000330 &lt;NA&gt; NA                0
+633      67000    D04 67000340 &lt;NA&gt; NA                0
+634      67000    D04 67000340 &lt;NA&gt; NA                0
+635      67000    D04 67000340 &lt;NA&gt; NA                0
+636      67000    D04 67000340 &lt;NA&gt; NA                0
+637      67000    D04 67000340 &lt;NA&gt; NA                0
+638      67000    D04 67000340 &lt;NA&gt; NA                0
+639      67000    D04 67000340 &lt;NA&gt; NA                0
+640      67000    D04 67000340 &lt;NA&gt; NA                0
+641      67000    D04 67000340 &lt;NA&gt; NA                0
+642      67000    D04 67000340 &lt;NA&gt; NA                0
+643      67000    D08 67000370 &lt;NA&gt; NA                0
+644      67000    D08 67000370 &lt;NA&gt; NA                0
+645      67000    D08 67000370 &lt;NA&gt; NA                0
+646      67000    D08 67000370 &lt;NA&gt; NA                0
+647      67000    D07 67000360 &lt;NA&gt; NA                0
+648      67000    D07 67000360 &lt;NA&gt; NA                0
+649      67000    D08 67000370 &lt;NA&gt; NA                0
+650      67000    D08 67000370 &lt;NA&gt; NA                0
+651      67000    D04 67000340 &lt;NA&gt; NA                0
+652      67000    D39 67000310 &lt;NA&gt; 37                1
+653      67000    D39 67000310 &lt;NA&gt; 38                1
+654      67000    D39 67000310 &lt;NA&gt; 44                4
+655      67000    D39 67000310 &lt;NA&gt; 45                1
+656      67000    D39 67000310 &lt;NA&gt; 46                3
+657      67000    D39 67000310 &lt;NA&gt; 47                1
+658      67000    D39 67000310 &lt;NA&gt; 48                2
+659      67000    D39 67000310 &lt;NA&gt; 49                1
+660      67000    D04 67000340 &lt;NA&gt; 40                6
+661      67000    D04 67000340 &lt;NA&gt; 44                1
+662      67000    D04 67000340 &lt;NA&gt; 45                1
+663      67000    D04 67000340 &lt;NA&gt; 44                1
+664      67000    D04 67000340 &lt;NA&gt; 45                1
+665      67000    D04 67000340 &lt;NA&gt; 40                7
+666      67000    D04 67000340 &lt;NA&gt; 44                1
+667      67000    D04 67000340 &lt;NA&gt; 45                7
+668      67000    D04 67000340 &lt;NA&gt; 40                9
+669      67000    D04 67000340 &lt;NA&gt; 44                1
+670      67000    D04 67000340 &lt;NA&gt; 45               11
+671      67000    D04 67000340 &lt;NA&gt; 48                1
+672      67000    D04 67000340 &lt;NA&gt; 49                1
+673      67000    D04 67000340 &lt;NA&gt; 40                5
+674      67000    D04 67000340 &lt;NA&gt; 44                1
+675      67000    D04 67000340 &lt;NA&gt; 45                2
+676      67000    D04 67000340 &lt;NA&gt; 40                8
+677      67000    D04 67000340 &lt;NA&gt; 45                3
+678      67000    D04 67000340 &lt;NA&gt; 40                3
+679      67000    D04 67000340 &lt;NA&gt; 45                2
+680      67000    D04 67000340 &lt;NA&gt; 38                1
+681      67000    D04 67000340 &lt;NA&gt; 40                4
+682      67000    D04 67000340 &lt;NA&gt; 44                1
+683      67000    D04 67000340 &lt;NA&gt; 45                9
+684      67000    D04 67000340 &lt;NA&gt; 48                1
+685      67000    D04 67000340 &lt;NA&gt; 49                1
+686      67000    D08 67000370 &lt;NA&gt; 45                3
+687      67000    D08 67000370 &lt;NA&gt; 46                1
+688      67000    D08 67000370 &lt;NA&gt; 49                1
+689      67000    D08 67000370 &lt;NA&gt; 45                2
+690      67000    D08 67000370 &lt;NA&gt; 50                1
+691      67000    D39 67000310 &lt;NA&gt; NA                0
+692      67000    D04 67000340 &lt;NA&gt; NA                0
+693      67000    D08 67000370 &lt;NA&gt; NA                0
+694      67000    D08 67000370 &lt;NA&gt; NA                0
+695      67000    D08 67000370 &lt;NA&gt; NA                0
+696      67000    D08 67000370 &lt;NA&gt; NA                0
+697      67000    D04 67000340 &lt;NA&gt; NA                0
+698      67000    D39 67000310 &lt;NA&gt; 44                4
+699      67000    D39 67000310 &lt;NA&gt; 47                2
+700      67000    D39 67000310 &lt;NA&gt; NA                0
+701      67000    D39 67000310 &lt;NA&gt; 44                2
+702      67000    D39 67000310 &lt;NA&gt; 45                7
+703      67000    D39 67000310 &lt;NA&gt; 49                1
+704      67000    D39 67000310 &lt;NA&gt; 50                1
+705      67000    D39 67000310 &lt;NA&gt; 44                9
+706      67000    D39 67000310 &lt;NA&gt; 45                4
+707      67000    D39 67000310 &lt;NA&gt; 46                2
+708      67000    D39 67000310 &lt;NA&gt; 47                2
+709      67000    D39 67000310 &lt;NA&gt; 48                1
+710      67000    D39 67000310 &lt;NA&gt; NA                0
+711      67000    D04 67000340 &lt;NA&gt; 40                9
+712      67000    D04 67000340 &lt;NA&gt; 43                1
+713      67000    D04 67000340 &lt;NA&gt; 44                1
+714      67000    D04 67000340 &lt;NA&gt; 45                9
+715      67000    D04 67000340 &lt;NA&gt; 40                6
+716      67000    D04 67000340 &lt;NA&gt; 45                5
+717      67000    D04 67000340 &lt;NA&gt; 49                3
+718      67000    D04 67000340 &lt;NA&gt; 50                1
+719      67000    D04 67000340 &lt;NA&gt; 40               12
+720      67000    D04 67000340 &lt;NA&gt; 42                1
+721      67000    D04 67000340 &lt;NA&gt; 44                2
+722      67000    D04 67000340 &lt;NA&gt; 45               12
+723      67000    D04 67000340 &lt;NA&gt; 36                1
+724      67000    D04 67000340 &lt;NA&gt; 40                4
+725      67000    D04 67000340 &lt;NA&gt; 44                1
+726      67000    D04 67000340 &lt;NA&gt; 45                4
+727      67000    D04 67000340 &lt;NA&gt; 48                1
+728      67000    D04 67000340 &lt;NA&gt; 50                1
+729      67000    D08 67000370 &lt;NA&gt; 45                6
+730      67000    D08 67000370 &lt;NA&gt; 48                1
+731      67000    D08 67000370 &lt;NA&gt; 44                1
+732      67000    D08 67000370 &lt;NA&gt; 45                1
+733      67000    D08 67000370 &lt;NA&gt; 43                1
+734      67000    D08 67000370 &lt;NA&gt; 44                1
+735      67000    D08 67000370 &lt;NA&gt; 45               10
+736      67000    D08 67000370 &lt;NA&gt; 46                1
+737      67000    D08 67000370 &lt;NA&gt; 49                1
+738      67000    D08 67000370 &lt;NA&gt; 38                1
+739      67000    D08 67000370 &lt;NA&gt; 40                1
+740      67000    D08 67000370 &lt;NA&gt; 44                2
+741      67000    D08 67000370 &lt;NA&gt; 50                1
+742      67000    D32 67000270 &lt;NA&gt; 48                1
+743      67000    D32 67000270 &lt;NA&gt; 49                1
+744      67000    D32 67000270 &lt;NA&gt; 50                1
+745      67000    D32 67000270 &lt;NA&gt; NA                0
+746      67000    D32 67000270 &lt;NA&gt; 41                1
+747      67000    D32 67000270 &lt;NA&gt; 44                2
+748      67000    D32 67000270 &lt;NA&gt; 45               10
+749      67000    D32 67000270 &lt;NA&gt; 48                1
+750      67000    D32 67000270 &lt;NA&gt; 49                1
+751      67000    D32 67000270 &lt;NA&gt; 50                2
+752      67000    D32 67000270 &lt;NA&gt; 45                1
+753      67000    D32 67000270 &lt;NA&gt; 49                1
+754      67000    D32 67000270 &lt;NA&gt; 45                3
+755      67000    D06 67000350 &lt;NA&gt; 44                3
+756      67000    D06 67000350 &lt;NA&gt; 45               12
+757      67000    D06 67000350 &lt;NA&gt; 46                1
+758      67000    D06 67000350 &lt;NA&gt; 50                2
+759      67000    D06 67000350 &lt;NA&gt; 44                2
+760      67000    D06 67000350 &lt;NA&gt; 45                7
+761      67000    D06 67000350 &lt;NA&gt; 44                5
+762      67000    D06 67000350 &lt;NA&gt; 45                8
+763      67000    D06 67000350 &lt;NA&gt; 46                1
+764      67000    D06 67000350 &lt;NA&gt; 44                1
+765      67000    D06 67000350 &lt;NA&gt; 45                1
+766      67000    D06 67000350 &lt;NA&gt; 48                1
+767      67000    D06 67000350 &lt;NA&gt; 34                1
+768      67000    D06 67000350 &lt;NA&gt; 38                1
+769      67000    D06 67000350 &lt;NA&gt; 45                5
+770      67000    D06 67000350 &lt;NA&gt; 49                1
+771      67000    D06 67000350 &lt;NA&gt; 44                4
+772      67000    D06 67000350 &lt;NA&gt; 45                6
+773      67000    D06 67000350 &lt;NA&gt; 44                1
+774      67000    D06 67000350 &lt;NA&gt; 45                1
+775      67000    D06 67000350 &lt;NA&gt; 50                1
+776      67000    D06 67000350 &lt;NA&gt; 45                2
+777      67000    D06 67000350 &lt;NA&gt; 50                1
+778      67000    D06 67000350 &lt;NA&gt; NA                0
+779      67000    D06 67000350 &lt;NA&gt; 45                1
+780      67000    D06 67000350 &lt;NA&gt; 44                1
+781      67000    D06 67000350 &lt;NA&gt; 49                1
+782      67000    D39 67000310 &lt;NA&gt; 44                1
+783      67000    D39 67000310 &lt;NA&gt; 36                1
+784      67000    D39 67000310 &lt;NA&gt; 40                1
+785      67000    D39 67000310 &lt;NA&gt; 41                1
+786      67000    D39 67000310 &lt;NA&gt; 42                1
+787      67000    D39 67000310 &lt;NA&gt; 44                3
+788      67000    D39 67000310 &lt;NA&gt; 45                4
+789      67000    D39 67000310 &lt;NA&gt; 46                4
+790      67000    D39 67000310 &lt;NA&gt; 47                2
+791      67000    D39 67000310 &lt;NA&gt; 48                1
+792      67000    D39 67000310 &lt;NA&gt; 49                1
+793      67000    D39 67000310 &lt;NA&gt; 44                1
+794      67000    D39 67000310 &lt;NA&gt; 45                2
+795      67000    D39 67000310 &lt;NA&gt; 46                4
+796      67000    D39 67000310 &lt;NA&gt; 44                6
+797      67000    D39 67000310 &lt;NA&gt; 45                7
+798      67000    D39 67000310 &lt;NA&gt; 46                1
+799      67000    D39 67000310 &lt;NA&gt; 47                1
+800      67000    D06 67000350 &lt;NA&gt; 45                4
+801      67000    D06 67000350 &lt;NA&gt; 36                1
+802      67000    D06 67000350 &lt;NA&gt; 49                2
+803      67000    D39 67000310 &lt;NA&gt; 44                1
+804      67000    D39 67000310 &lt;NA&gt; 45                3
+805      67000    D39 67000310 &lt;NA&gt; 46                2
+806      67000    D39 67000310 &lt;NA&gt; 47                2
+807      67000    D39 67000310 &lt;NA&gt; 40                3
+808      67000    D39 67000310 &lt;NA&gt; 44                2
+809      67000    D39 67000310 &lt;NA&gt; 45                7
+810      67000    D39 67000310 &lt;NA&gt; 46                4
+811      67000    D39 67000310 &lt;NA&gt; 47                1
+812      67000    D39 67000310 &lt;NA&gt; 39                1
+813      67000    D39 67000310 &lt;NA&gt; 40                1
+814      67000    D39 67000310 &lt;NA&gt; 41                2
+815      67000    D39 67000310 &lt;NA&gt; 42                1
+816      67000    D39 67000310 &lt;NA&gt; 45                1
+817      67000    D39 67000310 &lt;NA&gt; 46                1
+818      67000    D39 67000310 &lt;NA&gt; 47                1
+819      67000    D39 67000310 &lt;NA&gt; 49                1
+820      67000    D39 67000310 &lt;NA&gt; 45                4
+821      67000    D39 67000310 &lt;NA&gt; 46                1
+822      67000    D39 67000310 &lt;NA&gt; 50                1
+823      67000    D39 67000310 &lt;NA&gt; 45                1
+824      67000    D06 67000350 &lt;NA&gt; NA                0
+825      67000    D06 67000350 &lt;NA&gt; 45                1
+826      67000    D06 67000350 &lt;NA&gt; 46                1
+827      67000    D06 67000350 &lt;NA&gt; 40                1
+828      67000    D06 67000350 &lt;NA&gt; 41                1
+829      67000    D06 67000350 &lt;NA&gt; 42                2
+830      67000    D06 67000350 &lt;NA&gt; 43                2
+831      67000    D06 67000350 &lt;NA&gt; 44                2
+832      67000    D06 67000350 &lt;NA&gt; 45                4
+833      67000    D06 67000350 &lt;NA&gt; 46                2
+834      67000    D06 67000350 &lt;NA&gt; 47                2
+835      67000    D06 67000350 &lt;NA&gt; 48                1
+836      67000    D06 67000350 &lt;NA&gt; 49                1
+837      67000    D06 67000350 &lt;NA&gt; 45                4
+838      67000    D06 67000350 &lt;NA&gt; NA                0
+839      67000    D06 67000350 &lt;NA&gt; 45                1
+840      67000    D06 67000350 &lt;NA&gt; 37                1
+841      67000    D06 67000350 &lt;NA&gt; 40                1
+842      67000    D06 67000350 &lt;NA&gt; 41                1
+843      67000    D06 67000350 &lt;NA&gt; 42                2
+844      67000    D06 67000350 &lt;NA&gt; 43                1
+845      67000    D06 67000350 &lt;NA&gt; 44                1
+846      67000    D06 67000350 &lt;NA&gt; 45                1
+847      67000    D06 67000350 &lt;NA&gt; 46                5
+848      67000    D06 67000350 &lt;NA&gt; 47                1
+849      67000    D06 67000350 &lt;NA&gt; 48                1
+850      67000    D06 67000350 &lt;NA&gt; 49                1
+851      67000    D07 67000360 &lt;NA&gt; 40                9
+852      67000    D07 67000360 &lt;NA&gt; 41                1
+853      67000    D07 67000360 &lt;NA&gt; 45                1
+854      67000    D07 67000360 &lt;NA&gt; 40               17
+855      67000    D07 67000360 &lt;NA&gt; 41                9
+856      67000    D07 67000360 &lt;NA&gt; 44                1
+857      67000    D07 67000360 &lt;NA&gt; 45                5
+858      67000    D06 67000350 &lt;NA&gt; 44                2
+859      67000    D06 67000350 &lt;NA&gt; 45                9</code></pre>
+</div>
+</div>
+</section>
+<section id="global-spatial-autocorrelation-analysis" class="level1">
+<h1>Global Spatial Autocorrelation Analysis</h1>
+<p>This exercise expected the <code>sfdep</code> methods taught in <a href="&quot;In-class_Ex/In-class_Ex05/In-class_Ex05.html&quot;">In-class Exercise 5</a> to derive the various statistic values and explain them.</p>
+<p>Derive contiguity weights with Queen’s method</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>wm_q <span class="ot">&lt;-</span> tainan_dengue <span class="sc">%&gt;%</span> </span>
+<span id="cb14-2"><a href="#cb14-2"></a>  <span class="fu">mutate</span>(<span class="at">nb =</span> <span class="fu">st_contiguity</span>(geometry),</span>
+<span id="cb14-3"><a href="#cb14-3"></a>         <span class="at">wt =</span> <span class="fu">st_weights</span>(nb,</span>
+<span id="cb14-4"><a href="#cb14-4"></a>                         <span class="at">style =</span> <span class="st">"W"</span>),</span>
+<span id="cb14-5"><a href="#cb14-5"></a>         <span class="at">.before =</span> <span class="dv">1</span>)</span>
+<span id="cb14-6"><a href="#cb14-6"></a>wm_q</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Simple feature collection with 859 features and 14 fields
 Geometry type: POLYGON
 Dimension:     XY
 Bounding box:  xmin: 120.0627 ymin: 22.89401 xmax: 120.2925 ymax: 23.09144
 Geodetic CRS:  TWD97
 First 10 features:
-      VILLCODE COUNTYNAME TOWNNAME VILLNAME       VILLENG COUNTYID COUNTYCODE
-1  67000350032     臺南市   安南區   青草里  Qingcao Vil.        D      67000
-2  67000270011     臺南市   仁德區   保安里   Bao'an Vil.        D      67000
-3  67000370005     臺南市   中西區   赤嵌里  Chihkan Vil.        D      67000
-4  67000330004     臺南市     南區   大成里  Dacheng Vil.        D      67000
-5  67000350028     臺南市   安南區   城北里 Chengbei Vil.        D      67000
-6  67000350030     臺南市   安南區   城南里 Chengnan Vil.        D      67000
-7  67000370009     臺南市   中西區   法華里    Fahua Vil.        D      67000
-8  67000350017     臺南市   安南區   海南里   Hainan Vil.        D      67000
-9  67000350049     臺南市   安南區   國安里   Guo'an Vil.        D      67000
-10 67000350018     臺南市   安南區   溪心里    Xixin Vil.        D      67000
-   TOWNID TOWNCODE NOTE num_dengue_cases                       geometry
-1     D06 67000350 &lt;NA&gt;                0 POLYGON ((120.1176 23.08387...
-2     D32 67000270 &lt;NA&gt;                3 POLYGON ((120.2304 22.93544...
-3     D08 67000370 &lt;NA&gt;               22 POLYGON ((120.2012 22.99966...
-4     D02 67000330 &lt;NA&gt;                5 POLYGON ((120.1985 22.98147...
-5     D06 67000350 &lt;NA&gt;                0 POLYGON ((120.1292 23.06512...
-6     D06 67000350 &lt;NA&gt;                1 POLYGON ((120.1246 23.06904...
-7     D08 67000370 &lt;NA&gt;                3 POLYGON ((120.2094 22.98452...
-8     D06 67000350 &lt;NA&gt;                3 POLYGON ((120.175 23.02218,...
-9     D06 67000350 &lt;NA&gt;                2 POLYGON ((120.1866 23.02766...
-10    D06 67000350 &lt;NA&gt;                6 POLYGON ((120.1834 23.06086...</code></pre>
+                                                                                                                    nb
+1                                                                                                         15, 441, 607
+2                                      3, 4, 478, 479, 480, 481, 485, 486, 487, 488, 489, 519, 520, 629, 742, 743, 744
+3                                      2, 4, 478, 479, 480, 481, 485, 486, 487, 488, 489, 519, 520, 629, 742, 743, 744
+4                                      2, 3, 478, 479, 480, 481, 485, 486, 487, 488, 489, 519, 520, 629, 742, 743, 744
+5                                     6, 7, 8, 9, 231, 232, 233, 234, 235, 236, 633, 642, 645, 646, 649, 686, 687, 688
+6                                     5, 7, 8, 9, 231, 232, 233, 234, 235, 236, 633, 642, 645, 646, 649, 686, 687, 688
+7                                     5, 6, 8, 9, 231, 232, 233, 234, 235, 236, 633, 642, 645, 646, 649, 686, 687, 688
+8                                     5, 6, 7, 9, 231, 232, 233, 234, 235, 236, 633, 642, 645, 646, 649, 686, 687, 688
+9                                     5, 6, 7, 8, 231, 232, 233, 234, 235, 236, 633, 642, 645, 646, 649, 686, 687, 688
+10 11, 12, 13, 346, 347, 348, 349, 350, 359, 360, 361, 362, 363, 364, 370, 388, 389, 390, 391, 392, 393, 394, 643, 696
+                                                                                                                                                                                                                                                                                               wt
+1                                                                                                                                                                                                                                                                 0.3333333, 0.3333333, 0.3333333
+2                                                                                      0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353
+3                                                                                      0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353
+4                                                                                      0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353, 0.05882353
+5                                                                          0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556
+6                                                                          0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556
+7                                                                          0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556
+8                                                                          0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556
+9                                                                          0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556, 0.05555556
+10 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667, 0.04166667
+      VILLCODE COUNTYNAME TOWNNAME VILLNAME      VILLENG COUNTYID COUNTYCODE
+1  67000350032     臺南市   安南區   青草里 Qingcao Vil.        D      67000
+2  67000270011     臺南市   仁德區   保安里  Bao'an Vil.        D      67000
+3  67000270011     臺南市   仁德區   保安里  Bao'an Vil.        D      67000
+4  67000270011     臺南市   仁德區   保安里  Bao'an Vil.        D      67000
+5  67000370005     臺南市   中西區   赤嵌里 Chihkan Vil.        D      67000
+6  67000370005     臺南市   中西區   赤嵌里 Chihkan Vil.        D      67000
+7  67000370005     臺南市   中西區   赤嵌里 Chihkan Vil.        D      67000
+8  67000370005     臺南市   中西區   赤嵌里 Chihkan Vil.        D      67000
+9  67000370005     臺南市   中西區   赤嵌里 Chihkan Vil.        D      67000
+10 67000330004     臺南市     南區   大成里 Dacheng Vil.        D      67000
+   TOWNID TOWNCODE NOTE 周 num_dengue_cases                       geometry
+1     D06 67000350 &lt;NA&gt; NA                0 POLYGON ((120.1176 23.08387...
+2     D32 67000270 &lt;NA&gt; 40                1 POLYGON ((120.2304 22.93544...
+3     D32 67000270 &lt;NA&gt; 44                1 POLYGON ((120.2304 22.93544...
+4     D32 67000270 &lt;NA&gt; 49                1 POLYGON ((120.2304 22.93544...
+5     D08 67000370 &lt;NA&gt; 44                4 POLYGON ((120.2012 22.99966...
+6     D08 67000370 &lt;NA&gt; 45                9 POLYGON ((120.2012 22.99966...
+7     D08 67000370 &lt;NA&gt; 46                2 POLYGON ((120.2012 22.99966...
+8     D08 67000370 &lt;NA&gt; 48                3 POLYGON ((120.2012 22.99966...
+9     D08 67000370 &lt;NA&gt; 49                4 POLYGON ((120.2012 22.99966...
+10    D02 67000330 &lt;NA&gt; 42                1 POLYGON ((120.1985 22.98147...</code></pre>
 </div>
 </div>
+</section>
+<section id="local-spatial-autocorrelation-analysis" class="level1">
+<h1>Local Spatial Autocorrelation Analysis</h1>
+</section>
+<section id="emerging-hotspot-analysis" class="level1">
+<h1>Emerging Hotspot Analysis</h1>
 
 
 </section>
