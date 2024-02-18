@@ -7,6 +7,7 @@ format:
     code-overflow: wrap
     code-line-numbers: true
     code-copy: hover
+    self-contained: true
 execute: 
   eval: true
   echo: true

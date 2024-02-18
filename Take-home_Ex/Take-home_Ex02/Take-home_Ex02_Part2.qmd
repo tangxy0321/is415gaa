@@ -28,14 +28,6 @@ tainan <- readRDS("../../data/rds/tainan.rds")
 ## Get the derived dengue layer
 
 ```{r}
-tmap_mode("view")
-tm_shape(dengue)+
-  tm_dots()
-```
-
-Derive contiguity weight with Queen's method
-
-```{r}
 colnames(dengue)
 ```
 

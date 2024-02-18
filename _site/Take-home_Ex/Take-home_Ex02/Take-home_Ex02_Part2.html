@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>IS415-GAA - Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Report</title>
+<title>IS415-GAA - Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Part 2</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -182,12 +182,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="dropdown-text">Take-home Exercise 1</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../../Take-home_Ex/Take-home_Ex02/Take-home_Ex02.html">
- <span class="dropdown-text">Take-home Exercise 2: Geospatial Data Wrangling</span></a>
+    <a class="dropdown-item" href="../../Take-home_Ex/Take-home_Ex02/Take-home_Ex02_Part1.html">
+ <span class="dropdown-text">Take-home Exercise 2: Part 1</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../../Take-home_Ex/Take-home_Ex02/Take-home_Ex02_report.html">
- <span class="dropdown-text">Take-home Exercise 2: Report</span></a>
+    <a class="dropdown-item" href="../../Take-home_Ex/Take-home_Ex02/Take-home_Ex02_Part2.html">
+ <span class="dropdown-text">Take-home Exercise 2: Part 2</span></a>
   </li>  
     </ul>
   </li>
@@ -212,7 +212,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
-    
+    <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#get-the-derived-dengue-layer" id="toc-get-the-derived-dengue-layer" class="nav-link active" data-scroll-target="#get-the-derived-dengue-layer">Get the derived dengue layer</a></li>
+  </ul>
+</nav>
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
@@ -223,7 +229,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Report</h1>
+<h1 class="title">Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Part 2</h1>
 </div>
 
 
@@ -246,8 +252,107 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, tidyverse, tmap, sfdep)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
+<p>Load data in RDS format</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>dengue <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"../../data/rds/dengue.rds"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2"></a>tainan <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"../../data/rds/tainan.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="get-the-derived-dengue-layer" class="level2">
+<h2 class="anchored" data-anchor-id="get-the-derived-dengue-layer">Get the derived dengue layer</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="fu">colnames</span>(dengue)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "發病日"             "個案研判日"         "通報日"            
+ [4] "性別"               "年齡層"             "居住縣市"          
+ [7] "居住鄉鎮"           "居住村里"           "最小統計區"        
+[10] "一級統計區"         "二級統計區"         "感染縣市"          
+[13] "感染鄉鎮"           "感染村里"           "是否境外移入"      
+[16] "感染國家"           "確定病例數"         "居住村里代碼"      
+[19] "感染村里代碼"       "血清型"             "內政部居住縣市代碼"
+[22] "內政部居住鄉鎮代碼" "內政部感染縣市代碼" "內政部感染鄉鎮代碼"
+[25] "年"                 "周"                 "geometry"          </code></pre>
+</div>
+</div>
+<p>Find the counts of dengue cases in each town within the county</p>
+<ul>
+<li>The results showed that there are 344 villages with recorded cases in <code>dengue_grp</code> dataset, with a huge 17,945 cases without village name.</li>
+</ul>
+<p>I then matched the <code>tainan</code> dataset with the <code>dengue_grp</code> dataset, left joined using the village names that is presented in both datasets.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>dengue_grp <span class="ot">&lt;-</span> dengue <span class="sc">%&gt;%</span></span>
+<span id="cb5-2"><a href="#cb5-2"></a>  <span class="fu">group_by</span>(感染村里) <span class="sc">%&gt;%</span></span>
+<span id="cb5-3"><a href="#cb5-3"></a>  <span class="fu">summarise</span>(<span class="at">num_dengue_cases=</span><span class="fu">n</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb5-4"><a href="#cb5-4"></a>  <span class="fu">st_drop_geometry</span>()</span>
+<span id="cb5-5"><a href="#cb5-5"></a></span>
+<span id="cb5-6"><a href="#cb5-6"></a>dengue_grp</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 345 × 2
+   感染村里 num_dengue_cases
+ * &lt;chr&gt;               &lt;int&gt;
+ 1 None                17734
+ 2 一甲里                  9
+ 3 七甲里                  6
+ 4 三仙里                  1
+ 5 三合里                  8
+ 6 三舍里                  4
+ 7 上崙里                  6
+ 8 下湖里                  3
+ 9 下營里                  1
+10 中坑里                  2
+# ℹ 335 more rows</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>tainan_dengue <span class="ot">&lt;-</span> <span class="fu">left_join</span>(tainan, dengue_grp,</span>
+<span id="cb7-2"><a href="#cb7-2"></a>                           <span class="at">by =</span> <span class="fu">join_by</span>(VILLNAME <span class="sc">==</span> 感染村里))</span>
+<span id="cb7-3"><a href="#cb7-3"></a></span>
+<span id="cb7-4"><a href="#cb7-4"></a>tainan_dengue<span class="sc">$</span>num_dengue_cases <span class="ot">&lt;-</span> tainan_dengue<span class="sc">$</span>num_dengue_cases <span class="sc">%&gt;%</span></span>
+<span id="cb7-5"><a href="#cb7-5"></a>  <span class="fu">replace_na</span>(<span class="dv">0</span>)</span>
+<span id="cb7-6"><a href="#cb7-6"></a>tainan_dengue</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Simple feature collection with 258 features and 11 fields
+Geometry type: POLYGON
+Dimension:     XY
+Bounding box:  xmin: 120.0627 ymin: 22.89401 xmax: 120.2925 ymax: 23.09144
+Geodetic CRS:  TWD97
+First 10 features:
+      VILLCODE COUNTYNAME TOWNNAME VILLNAME       VILLENG COUNTYID COUNTYCODE
+1  67000350032     臺南市   安南區   青草里  Qingcao Vil.        D      67000
+2  67000270011     臺南市   仁德區   保安里   Bao'an Vil.        D      67000
+3  67000370005     臺南市   中西區   赤嵌里  Chihkan Vil.        D      67000
+4  67000330004     臺南市     南區   大成里  Dacheng Vil.        D      67000
+5  67000350028     臺南市   安南區   城北里 Chengbei Vil.        D      67000
+6  67000350030     臺南市   安南區   城南里 Chengnan Vil.        D      67000
+7  67000370009     臺南市   中西區   法華里    Fahua Vil.        D      67000
+8  67000350017     臺南市   安南區   海南里   Hainan Vil.        D      67000
+9  67000350049     臺南市   安南區   國安里   Guo'an Vil.        D      67000
+10 67000350018     臺南市   安南區   溪心里    Xixin Vil.        D      67000
+   TOWNID TOWNCODE NOTE num_dengue_cases                       geometry
+1     D06 67000350 &lt;NA&gt;                0 POLYGON ((120.1176 23.08387...
+2     D32 67000270 &lt;NA&gt;                3 POLYGON ((120.2304 22.93544...
+3     D08 67000370 &lt;NA&gt;               22 POLYGON ((120.2012 22.99966...
+4     D02 67000330 &lt;NA&gt;                5 POLYGON ((120.1985 22.98147...
+5     D06 67000350 &lt;NA&gt;                0 POLYGON ((120.1292 23.06512...
+6     D06 67000350 &lt;NA&gt;                1 POLYGON ((120.1246 23.06904...
+7     D08 67000370 &lt;NA&gt;                3 POLYGON ((120.2094 22.98452...
+8     D06 67000350 &lt;NA&gt;                3 POLYGON ((120.175 23.02218,...
+9     D06 67000350 &lt;NA&gt;                2 POLYGON ((120.1866 23.02766...
+10    D06 67000350 &lt;NA&gt;                6 POLYGON ((120.1834 23.06086...</code></pre>
+</div>
+</div>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
