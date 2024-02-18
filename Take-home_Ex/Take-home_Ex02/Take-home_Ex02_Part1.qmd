@@ -1,0 +1,99 @@
+---
+title: "Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Geospatial Data Wrangling"
+format: 
+  html: 
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: wrap
+    code-line-numbers: true
+    code-copy: hover
+execute: 
+  eval: true
+  echo: true
+  freeze: auto
+---
+
+```{r}
+pacman::p_load(sf, tidyverse, tmap, sfdep, lubridate)
+```
+
+# Import Data
+
+The following datasets are used in this exercise.
+
+-   `TAIWAN_VILLAGE_2020`, a geospatial data of village boundary of Taiwan. It is in ESRI shapefile format. The data is in Taiwan Geographic Coordinate System TWD97.
+
+-   `Dengue_Daily.csv`, an aspatial data of reported dengue cases in Taiwan since 1998.
+
+```{r}
+tainan <- st_read(dsn = "../../data/geospatial",
+                  layer = "TAINAN_VILLAGE")
+
+dengue <- read_csv("../../data/aspatial/Dengue_Daily.csv")
+```
+
+# Preparing data for analysis
+
+## Study area preparation
+
+According to the task objective given, this exercise requested for counties labelled D01, D02, D04, D06, D07, D08, D32 and D39
+
+```{r}
+tainan <- tainan[tainan$TOWNID %in% c("D01", "D02","D04","D06","D07","D08","D32","D39"),]
+plot(tainan)
+```
+
+```{r}
+#| eval: false
+#| echo: false
+write_rds(tainan, "../../data/rds/tainan.rds")
+```
+
+## Dengue fever layer preparation
+
+This exercise requires dengue cases in Tainan, Taiwan. The original tibble is filtered by the condition where county name is equals to Tainan, and saved back to the same variable name.
+
+```{r}
+dengue <- dengue %>% 
+  mutate(年 = factor(year(通報日)),
+         周 = week(通報日)) %>% 
+  filter(居住縣市 == "台南市",
+         年 == "2023",
+         周 >= 31,
+         周 <= 50) 
+  
+dengue
+```
+
+Convert `dengue` to `sf` object such that the object would be able to be projected to `TWD97`. Before conversion, check that there is no missing value in coordinates
+
+```{r}
+sum(dengue$最小統計區中心點X == "None")
+sum(dengue$最小統計區中心點Y == "None")
+```
+
+Drop those with None values: Currently could not find a effective way to fill in, so to not obstruct the conversion into a `sf` object, I decided to drop the rows with "None" values for the coordinates columns.
+
+```{r}
+dengue <- dengue %>% 
+  filter(最小統計區中心點X != "None",
+         最小統計區中心點Y != "None")
+sum(dengue$最小統計區中心點X == "None")
+sum(dengue$最小統計區中心點Y == "None")
+```
+
+Convert `dengue` to `sf` object and assign projected coordinate system
+
+```{r}
+dengue <- st_as_sf(dengue,
+                   coords = c("最小統計區中心點X","最小統計區中心點Y"),
+                   crs = 3824)
+```
+
+```{r}
+#| echo: false
+#| eval: false
+write_rds(dengue, "../../data/rds/dengue.rds")
+```
+
+Due to limited memory space, please go to [Part 2](Take-home_Ex/Take-home_Ex02/Take-home_Ex02_Part2.html) for further details.
