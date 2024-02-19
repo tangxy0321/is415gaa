@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>IS415-GAA - Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Part 2</title>
+<title>IS415-GAA - In-class Exercise 7: Emerging Hot Spot Analysis - sfdep methods</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -220,12 +220,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#global-spatial-autocorrelation-analysis" id="toc-global-spatial-autocorrelation-analysis" class="nav-link active" data-scroll-target="#global-spatial-autocorrelation-analysis">Global Spatial Autocorrelation Analysis</a>
-  <ul class="collapse">
-  <li><a href="#derive-contiguity-weights-with-queens-method" id="toc-derive-contiguity-weights-with-queens-method" class="nav-link" data-scroll-target="#derive-contiguity-weights-with-queens-method">Derive contiguity weights with Queen’s method</a></li>
-  </ul></li>
-  <li><a href="#local-spatial-autocorrelation-analysis" id="toc-local-spatial-autocorrelation-analysis" class="nav-link" data-scroll-target="#local-spatial-autocorrelation-analysis">Local Spatial Autocorrelation Analysis</a></li>
-  <li><a href="#emerging-hotspot-analysis" id="toc-emerging-hotspot-analysis" class="nav-link" data-scroll-target="#emerging-hotspot-analysis">Emerging Hotspot Analysis</a></li>
+  <li><a href="#notes" id="toc-notes" class="nav-link active" data-scroll-target="#notes">Notes</a></li>
+  <li><a href="#work" id="toc-work" class="nav-link" data-scroll-target="#work">Work</a></li>
   </ul>
 </nav>
 </nav>
@@ -238,7 +234,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Part 2</h1>
+<h1 class="title">In-class Exercise 7: Emerging Hot Spot Analysis - <code>sfdep</code> methods</h1>
 </div>
 
 
@@ -255,36 +251,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<div class="cell">
-<details class="code-fold">
-<summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, tidyverse, tmap, sfdep)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
-<p>Load data in RDS format</p>
-<div class="cell">
-<details class="code-fold">
-<summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>tainan_dengue <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"../../data/rds/tainan_dengue.rds"</span>)</span>
-<span id="cb2-2"><a href="#cb2-2"></a>tainan_dengue_s3 <span class="ot">&lt;-</span> <span class="fu">complete_spacetime_cube</span>(tainan_dengue)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
-<section id="global-spatial-autocorrelation-analysis" class="level1">
-<h1>Global Spatial Autocorrelation Analysis</h1>
-<p>This exercise expected the <code>sfdep</code> methods taught in <a href="&quot;In-class_Ex/In-class_Ex05/In-class_Ex05.html&quot;">In-class Exercise 5</a> to derive the various statistic values and explain them.</p>
-<section id="derive-contiguity-weights-with-queens-method" class="level2">
-<h2 class="anchored" data-anchor-id="derive-contiguity-weights-with-queens-method">Derive contiguity weights with Queen’s method</h2>
-<p>Get neighbour list</p>
+<section id="notes" class="level1">
+<h1>Notes</h1>
+<p>Compare null hypothesis (resemble complete randomness), if p-value &gt; alpha value, reject null hypothesis and accept alternative hypothesis (distribution more leaning towards clustering)</p>
+<p>Do Monte Carlos methods -&gt; perm_test of Moran I (aggregate results obtained - how many times the null hypothesis is rejected or not rejected)</p>
+<p>**perm_test more important, no need to do single stat without simulations</p>
+<p>For hotspots, we want to know is it cluster (higher-density area surrounded by higher-density area; lower-density area surrounded by lower-density area) or outlier (higher-density area surrounded by lower-density area)</p>
 <ul>
-<li><code>activate</code> will retrieve geometry column back (as spacetime object doesn’t show geomotry)</li>
+<li>control value ._ alpha value (when increased, diminishing return will be higher)</li>
 </ul>
+<p>** Gi only give hot/cold class value</p>
 </section>
-</section>
-<section id="local-spatial-autocorrelation-analysis" class="level1">
-<h1>Local Spatial Autocorrelation Analysis</h1>
-</section>
-<section id="emerging-hotspot-analysis" class="level1">
-<h1>Emerging Hotspot Analysis</h1>
+<section id="work" class="level1">
+<h1>Work</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, sfdep, tidyverse, tmap)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Import data</p>
 
 
 </section>

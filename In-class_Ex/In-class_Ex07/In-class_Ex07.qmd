@@ -1,0 +1,25 @@
+---
+title: "In-class Exercise 7: Emerging Hot Spot Analysis - `sfdep` methods"
+---
+# Notes
+Compare null hypothesis (resemble complete randomness), if p-value \> alpha value, reject null hypothesis and accept alternative hypothesis (distribution more leaning towards clustering)
+
+Do Monte Carlos methods -\> perm_test of Moran I (aggregate results obtained - how many times the null hypothesis is rejected or not rejected)
+
+\*\*perm_test more important, no need to do single stat without simulations
+
+For hotspots, we want to know is it cluster (higher-density area surrounded by higher-density area; lower-density area surrounded by lower-density area) or outlier (higher-density area surrounded by lower-density area)
+
+-   control value ._ alpha value (when increased, diminishing return will be higher)
+
+** Gi only give hot/cold class value
+
+# Work
+
+```{r}
+pacman::p_load(sf, sfdep, tidyverse, tmap)
+```
+
+Import data
+
+

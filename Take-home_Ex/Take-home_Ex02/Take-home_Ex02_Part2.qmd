@@ -20,52 +20,24 @@ pacman::p_load(sf, tidyverse, tmap, sfdep)
 Load data in RDS format
 
 ```{r}
-dengue <- readRDS("../../data/rds/dengue.rds")
-tainan <- readRDS("../../data/rds/tainan.rds")
+tainan_dengue <- read_rds("../../data/rds/tainan_dengue.rds")
+tainan_dengue_s3 <- complete_spacetime_cube(tainan_dengue)
 ```
 
-
-## Get the derived dengue layer
-
-```{r}
-colnames(dengue)
-```
-
-Find the counts of dengue cases in each town within the county
-
--   The results showed that there are 344 villages with recorded cases in `dengue_grp` dataset, with a huge 17,945 cases without village name.
-
-I then matched the `tainan` dataset with the `dengue_grp` dataset, left joined using the village names that is presented in both datasets.
-
-```{r}
-dengue_grp <- dengue %>%
-  group_by(感染村里, 周) %>%
-  summarise(num_dengue_cases=n()) %>%
-  st_drop_geometry()
-
-dengue_grp
-
-tainan_dengue <- left_join(tainan, dengue_grp,
-                           by = join_by(VILLNAME == 感染村里))
-
-tainan_dengue$num_dengue_cases <- tainan_dengue$num_dengue_cases %>%
-  replace_na(0)
-tainan_dengue_s3 <- as_spacetime(tainan_dengue, .loc_col = "VILLNAME", .time_col = "周")
-tainan_dengue_s3
-```
 # Global Spatial Autocorrelation Analysis
 
 This exercise expected the `sfdep` methods taught in [In-class Exercise 5]("In-class_Ex/In-class_Ex05/In-class_Ex05.html") to derive the various statistic values and explain them.
 
-Derive contiguity weights with Queen's method
+## Derive contiguity weights with Queen's method
+
+Get neighbour list
+
+-   `activate` will retrieve geometry column back (as spacetime object doesn't show geomotry)
+
 ```{r}
-wm_q <- tainan_dengue %>% 
-  mutate(nb = st_contiguity(geometry),
-         wt = st_weights(nb,
-                         style = "W"),
-         .before = 1)
-wm_q
+
 ```
+
 # Local Spatial Autocorrelation Analysis
 
 

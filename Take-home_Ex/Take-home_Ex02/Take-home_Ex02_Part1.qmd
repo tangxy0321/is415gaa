@@ -1,5 +1,5 @@
 ---
-title: "Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Part 1"
+title: "Take-home Exercise 2: Application of Spatial and Spatio-temporal Analysis Methods to Discover the Distribution of Dengue Fever in Tainan City, Taiwan - Geospatial Data Wrangling"
 format: 
   html: 
     code-fold: true
@@ -37,12 +37,25 @@ dengue <- read_csv("../../data/aspatial/Dengue_Daily.csv")
 
 ## Study area preparation
 
-According to the task objective given, this exercise requested for counties labelled D01, D02, D04, D06, D07, D08, D32 and D39
+According to the task objective given, this exercise requested for towns labelled D01, D02, D04, D06, D07, D08, D32 and D39
 
 ```{r}
 tainan <- tainan[tainan$TOWNID %in% c("D01", "D02","D04","D06","D07","D08","D32","D39"),]
 plot(tainan)
 ```
+After checking `VILLNAME` available in `tainan`, there are repeated village names that are under different towns. Assign new names to each village by combining existing town name with current village name
+
+```{r}
+#| eval: false
+#| echo: false
+table(tainan$VILLNAME)
+```
+
+```{r}
+tainan$VILLNAME <- paste(tainan$TOWNNAME, tainan$VILLNAME,
+                         sep = "_")
+```
+
 
 ```{r}
 #| eval: false
@@ -52,18 +65,17 @@ write_rds(tainan, "../../data/rds/tainan.rds")
 
 ## Dengue fever layer preparation
 
-This exercise requires dengue cases in Tainan, Taiwan. The original tibble is filtered by the condition where county name is equals to Tainan, and saved back to the same variable name.
+This exercise requires dengue cases in Tainan, Taiwan. The original tibble is filtered by the condition where county name is Tainan and the desired time period of week 31 to 50 of 2023, and saved back to the same variable name.
 
 ```{r}
 dengue <- dengue %>% 
-  mutate(年 = factor(year(通報日)),
-         周 = week(通報日)) %>% 
-  filter(居住縣市 == "台南市",
-         年 == "2023",
-         周 >= 31,
-         周 <= 50) 
-  
-dengue
+  mutate(年 = factor(year(發病日)),
+         week = epiweek(發病日),
+         VILLNAME = paste(居住鄉鎮, 居住村里, sep = "_")) %>% 
+  filter(年 == 2023,
+         居住縣市 == "台南市",
+         week >= 31,
+         week <= 50) 
 ```
 
 Convert `dengue` to `sf` object such that the object would be able to be projected to `TWD97`. Before conversion, check that there is no missing value in coordinates
@@ -73,12 +85,13 @@ sum(dengue$最小統計區中心點X == "None")
 sum(dengue$最小統計區中心點Y == "None")
 ```
 
-Drop those with None values: Currently could not find a effective way to fill in, so to not obstruct the conversion into a `sf` object, I decided to drop the rows with "None" values for the coordinates columns.
+Drop those with None values: Currently could not find a effective way to fill in, so to not obstruct the conversion into a `sf` object, I decided to drop the rows with "None" values for the coordinates columns. Also, to standardise the village name for `dengue` dataset.
 
 ```{r}
 dengue <- dengue %>% 
   filter(最小統計區中心點X != "None",
-         最小統計區中心點Y != "None")
+         最小統計區中心點Y != "None",
+         VILLNAME  %in% tainan$VILLNAME)
 sum(dengue$最小統計區中心點X == "None")
 sum(dengue$最小統計區中心點Y == "None")
 ```
@@ -91,10 +104,61 @@ dengue <- st_as_sf(dengue,
                    crs = 3824)
 ```
 
+
 ```{r}
 #| echo: false
 #| eval: false
 write_rds(dengue, "../../data/rds/dengue.rds")
 ```
 
-Due to limited memory space, please go to [Part 2](Take-home_Ex/Take-home_Ex02/Take-home_Ex02_Part2.html) for further details.
+# Get derived dengue layer
+
+Using `spacetime()` function to create `spacetime` object
+
+```{r}
+colnames(dengue)
+```
+
+```{r}
+dengue_grp <- dengue %>%
+  group_by(VILLNAME, week) %>%
+  summarise(num_dengue_cases = n()) %>% 
+  filter(VILLNAME != "None") %>% 
+  st_drop_geometry()
+
+tainan <- tainan %>% 
+  filter(VILLNAME %in% unique(dengue_grp$VILLNAME))
+```
+
+As the time-series is incomplete, stating only weeks that have recorded instances of dengue, weeks with `num_dengue_cases = 0` needs to be included as well.
+
+```{r}
+
+for (vill in dengue_grp$VILLNAME) {
+  vill_record <- dengue_grp %>%
+    filter(VILLNAME == vill)
+  for (wk in 31:50) {
+    if (!(wk %in% vill_record$week)) {
+      dengue_grp[nrow(dengue_grp)+1,] = list(vill, wk, 0)
+    }
+  }
+}
+```
+
+
+```{r}
+tainan_dengue_st <- spacetime(.data = dengue_grp,
+                              .geometry = tainan,
+                              .loc_col = "VILLNAME",
+                              .time_col = "week")
+is_spacetime_cube(tainan_dengue_st)
+```
+
+The derived `tainan_dengue` layer is then saved as a RDS file.
+```{r}
+#| eval: false
+#| echo: false
+write_rds(tainan_dengue_st,"../../data/rds/tainan_dengue.rds")
+```
+
+Please go to [Report](Take-home_Ex/Take-home_Ex02/Take-home_Ex02_Part2.html) for further details.
