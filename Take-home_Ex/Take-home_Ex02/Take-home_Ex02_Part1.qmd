@@ -105,12 +105,6 @@ dengue <- st_as_sf(dengue,
 ```
 
 
-```{r}
-#| echo: false
-#| eval: false
-write_rds(dengue, "../../data/rds/dengue.rds")
-```
-
 # Get derived dengue layer
 
 Using `spacetime()` function to create `spacetime` object
@@ -123,7 +117,7 @@ colnames(dengue)
 dengue_grp <- dengue %>%
   group_by(VILLNAME, week) %>%
   summarise(num_dengue_cases = n()) %>% 
-  filter(VILLNAME != "None") %>% 
+  filter(VILLNAME != "None") %>%
   st_drop_geometry()
 
 tainan <- tainan %>% 
@@ -147,6 +141,14 @@ for (vill in dengue_grp$VILLNAME) {
 
 
 ```{r}
+#| echo: false
+#| eval: false
+write_rds(tainan, "../../data/rds/tainan.rds")
+write_rds(dengue_grp, "../../data/rds/dengue.rds")
+```
+
+
+```{r}
 tainan_dengue_st <- spacetime(.data = dengue_grp,
                               .geometry = tainan,
                               .loc_col = "VILLNAME",
@@ -156,8 +158,7 @@ is_spacetime_cube(tainan_dengue_st)
 
 The derived `tainan_dengue` layer is then saved as a RDS file.
 ```{r}
-#| eval: false
-#| echo: false
+
 write_rds(tainan_dengue_st,"../../data/rds/tainan_dengue.rds")
 ```
 

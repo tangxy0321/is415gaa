@@ -4976,7 +4976,7 @@ all</code></pre>
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a>dengue_grp <span class="ot">&lt;-</span> dengue <span class="sc">%&gt;%</span></span>
 <span id="cb21-2"><a href="#cb21-2"></a>  <span class="fu">group_by</span>(VILLNAME, week) <span class="sc">%&gt;%</span></span>
 <span id="cb21-3"><a href="#cb21-3"></a>  <span class="fu">summarise</span>(<span class="at">num_dengue_cases =</span> <span class="fu">n</span>()) <span class="sc">%&gt;%</span> </span>
-<span id="cb21-4"><a href="#cb21-4"></a>  <span class="fu">filter</span>(VILLNAME <span class="sc">!=</span> <span class="st">&quot;None&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb21-4"><a href="#cb21-4"></a>  <span class="fu">filter</span>(VILLNAME <span class="sc">!=</span> <span class="st">&quot;None&quot;</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb21-5"><a href="#cb21-5"></a>  <span class="fu">st_drop_geometry</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stderr">
@@ -5018,6 +5018,12 @@ all</code></pre>
 </div>
 </div>
 <p>The derived <code>tainan_dengue</code> layer is then saved as a RDS file.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1"></a><span class="fu">write_rds</span>(tainan_dengue_st,<span class="st">&quot;../../data/rds/tainan_dengue.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
 <p>Please go to <a href="Take-home_Ex/Take-home_Ex02/Take-home_Ex02_Part2.html">Report</a> for further details.</p>
 
 

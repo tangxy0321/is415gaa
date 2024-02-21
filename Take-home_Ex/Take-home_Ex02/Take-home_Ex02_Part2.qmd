@@ -20,23 +20,57 @@ pacman::p_load(sf, tidyverse, tmap, sfdep)
 Load data in RDS format
 
 ```{r}
+tainan <- read_rds("../../data/rds/tainan.rds")
+dengue <- read_rds("../../data/rds/dengue.rds")
 tainan_dengue <- read_rds("../../data/rds/tainan_dengue.rds")
-tainan_dengue_s3 <- complete_spacetime_cube(tainan_dengue)
+
 ```
+
 
 # Global Spatial Autocorrelation Analysis
 
-This exercise expected the `sfdep` methods taught in [In-class Exercise 5]("In-class_Ex/In-class_Ex05/In-class_Ex05.html") to derive the various statistic values and explain them.
+This exercise expected the `sfdep` methods taught in [In-class Exercise 5: Global and Local Measures of Spatial Autocorrelation]("In-class_Ex/In-class_Ex05/In-class_Ex05.html") and [In-class Exercise 7: Emerging Hot Spot Analysis]("In-class_Ex/In-class_Ex07/In-class_Ex07.html") to derive the various statistic values and explain them.
 
 ## Derive contiguity weights with Queen's method
 
-Get neighbour list
-
--   `activate` will retrieve geometry column back (as spacetime object doesn't show geomotry)
+`left_join` to combine the datasets
 
 ```{r}
-
+tainan_dengue_sf <- left_join(tainan, dengue, 
+                              by= join_by(VILLNAME))
+tainan_dengue_sf
 ```
+
+
+Get neighbour list
+
+-   `activate` will retrieve geometry column back (as spacetime object doesn't show geomotry in tibble form
+
+-   `mutate` create the `nb` and `wt` columns
+
+-   `set_nbs` and `set_wts` to copy over to each time-slice (by epiweek in this exercise's context)
+
+
+```{r}
+dengue_wm_q <- tainan_dengue_sf %>% 
+  mutate(nb = st_contiguity(geometry),
+         wt = st_weights(nb,
+                         style = "W"),
+         .before = 1)
+dengue_wm_q
+```
+
+Get Global G statistics
+
+```{r}
+set.seed(1004)
+global_moran_perm(dengue_wm_q$num_dengue_cases, 
+                  dengue_wm_q$nb,
+                  dengue_wm_q$wt,
+                  nsim = 99)
+```
+The report above shows that the p-value is less than the alpha value of 0.05. We have sufficient statistical evidence to reject the null hypothesis that spatial distribution of dengue cases is random. Also as the Moran I statistics is greater than 0, the spatial distribution of dengue cases had shown sign of clustering.
+
 
 # Local Spatial Autocorrelation Analysis
 
