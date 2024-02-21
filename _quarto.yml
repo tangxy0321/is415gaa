@@ -34,9 +34,9 @@ website:
         menu: 
           - text: "Take-home Exercise 1"
             href: "Take-home_Ex/Take-home_Ex01/Take-home_Ex01.html"
-          - text: "Take-home Exercise 2: Part 1"
+          - text: "Take-home Exercise 2: Geospatial Data Wrangling"
             href: "Take-home_Ex/Take-home_Ex02/Take-home_Ex02_Part1.html"
-          - text: "Take-home Exercise 2: Part 2"
+          - text: "Take-home Exercise 2: Report and Analysis"
             href: "Take-home_Ex/Take-home_Ex02/Take-home_Ex02_Part2.html"
     right:
       - href: index.qmd
