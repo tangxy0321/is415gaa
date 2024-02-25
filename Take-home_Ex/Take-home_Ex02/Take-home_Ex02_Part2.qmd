@@ -14,7 +14,7 @@ execute:
 ---
 
 ```{r}
-pacman::p_load(sf, tidyverse, tmap, sfdep)
+pacman::p_load(sf, tidyverse, tmap, sfdep, stars)
 ```
 
 Load data in RDS format
@@ -23,9 +23,7 @@ Load data in RDS format
 tainan <- read_rds("../../data/rds/tainan.rds")
 dengue <- read_rds("../../data/rds/dengue.rds")
 tainan_dengue <- read_rds("../../data/rds/tainan_dengue.rds")
-
 ```
-
 
 # Global Spatial Autocorrelation Analysis
 
@@ -38,18 +36,36 @@ This exercise expected the `sfdep` methods taught in [In-class Exercise 5: Globa
 ```{r}
 tainan_dengue_sf <- left_join(tainan, dengue, 
                               by= join_by(VILLNAME))
+# tainan_dengue_grp_sf <- tainan_dengue_sf %>% 
+#   group_by(VILLNAME) %>% 
+#   summarise(sum_num_dengue_cases = sum(num_dengue_cases))
+# tainan_dengue_grp_sf
 tainan_dengue_sf
 ```
 
+This would be how the distribution of the dengue dataset
 
+```{r}
+tmap_mode("plot")
+tm_shape(tainan_dengue_sf %>% 
+           group_by(VILLNAME) %>% 
+           summarise(cases = sum(num_dengue_cases))) +
+  tm_fill("cases", 
+          style = "quantile", 
+          palette = "Blues",
+          title = "Cases") +
+  tm_layout(main.title = "Distribution of Dengue Cases by village, Tainan County",
+            main.title.position = "center",
+            main.title.size = 0.8,
+            legend.height = 0.45, 
+            legend.width = 0.35,
+            frame = TRUE) +
+  tm_borders(alpha = 0.5) +
+  tm_compass(type="8star", size = 2)
+```
 Get neighbour list
 
--   `activate` will retrieve geometry column back (as spacetime object doesn't show geomotry in tibble form
-
 -   `mutate` create the `nb` and `wt` columns
-
--   `set_nbs` and `set_wts` to copy over to each time-slice (by epiweek in this exercise's context)
-
 
 ```{r}
 dengue_wm_q <- tainan_dengue_sf %>% 
@@ -60,19 +76,122 @@ dengue_wm_q <- tainan_dengue_sf %>%
 dengue_wm_q
 ```
 
-Get Global G statistics
+Get Global Moran I statistics
 
 ```{r}
 set.seed(1004)
-global_moran_perm(dengue_wm_q$num_dengue_cases, 
+global_m_perm = global_moran_perm(dengue_wm_q$num_dengue_cases, 
                   dengue_wm_q$nb,
                   dengue_wm_q$wt,
                   nsim = 99)
+global_m_perm
 ```
 The report above shows that the p-value is less than the alpha value of 0.05. We have sufficient statistical evidence to reject the null hypothesis that spatial distribution of dengue cases is random. Also as the Moran I statistics is greater than 0, the spatial distribution of dengue cases had shown sign of clustering.
 
+```{r}
+hist(global_m_perm$res,
+     freq = TRUE,
+     breaks = 20,
+     xlab = "Simulated Moran's I")
+abline(v = 0,
+       col = "red")
+```
 
 # Local Spatial Autocorrelation Analysis
 
+## Cluster and Outlier Analysis
+
+Get local Moran's I statistics to 
+
+```{r}
+set.seed(1003)
+lisa <- dengue_wm_q %>% 
+  mutate(local_moran = local_moran(num_dengue_cases, nb, wt,
+                                   nsim = 199),
+         .before = 1) %>% 
+  unnest(local_moran)
+glimpse(lisa)
+```
+
+Look at the local Moran I statistics for each village. The graph supports our interpretation that the data is clustered.
+
+```{r}
+tmap_mode("plot")
+
+map1 <- tm_shape(lisa) +
+  tm_fill(col = "p_ii",
+          breaks = c(0, 0.001, 0.01, 0.05, 1),
+          labels = c("0.001", "0.01", "0.05", "Not sig"),
+          palette = "-YlOrBr",
+          title = "p-values") +
+  tm_borders(alpha = 0.5) +
+  tm_layout(main.title = "p-value of local Moran's I",
+            main.title.size = 0.8)
+
+map2 <- tm_shape(lisa) +
+  tm_fill("ii") + 
+  tm_borders(alpha = 0.5) +
+  tm_view(set.zoom.limits = c(6,8)) +
+  tm_layout(main.title = "local Moran's I of GDPPC",
+            main.title.size = 0.8)
+
+tmap_arrange(map1,map2,ncol = 2)
+```
+
+We can see that both negative and positive local Moran's I statistics values exist in the dataset.
+
+We now want to look at the local Moran's I statistics for statistically important villages (where the p-value < 0.05).
+
+```{r}
+tmap_mode("plot") +
+  tm_shape(lisa %>% 
+             relocate(VILLNAME,
+                      .before = 1) %>% 
+             filter(p_ii < 0.05)) +
+  tm_fill("ii") +
+  tm_borders(alpha = 0.5) +
+  # tm_view(set.zoom.limits = c(6,8)) +
+  tm_layout(main.title = "p-values for Number of dengue cases in each village",
+            main.title.size = 0.8)
+```
+
+From the above we can see that, the outlier exist around the centre of the Tainan county and the cluster lies nearer to the boundary of the Tainan county.
 
 # Emerging Hotspot Analysis
+
+Now we want to know where are the hot and cold spots.
+
+Making use of the spacetime layer derived in [Part 1](Take-home_Ex/Take-home_Ex02/Take-home_Ex02_Part1.html), we calculate the contiguity weight matrix. 
+
+Before starting work, we need to ensure that the layer is indeed a spacetime cube object.
+
+```{r}
+is_spacetime_cube(tainan_dengue)
+```
+
+```{r}
+dengue_nb <- tainan_dengue %>%
+  activate("geometry") %>%
+  mutate(nb = include_self(st_contiguity(geometry)),
+         wt = st_inverse_distance(nb, geometry,
+                                  scale = 1,
+                                  alpha = 1),
+         .before = 1) %>% 
+  set_nbs("nb") %>% 
+  # complete_spacetime_cube() %>% 
+  # set_wts("wt")
+
+is_spacetime(dengue_nb)
+is_spacetime_cube(dengue_nb)
+```
+Start computing the local Gi* for each village
+
+```{r}
+# gi_stars <- dengue_nb %>% 
+#   group_by(week) %>% 
+#   mutate(gi_stars = local_gstar_perm(num_dengue_cases, nb , wt,
+#                                      nsim = 99)) %>%
+#   unnest(gi_stars)
+```
+
+

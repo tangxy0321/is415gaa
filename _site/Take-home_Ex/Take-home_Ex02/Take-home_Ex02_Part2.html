@@ -224,7 +224,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#derive-contiguity-weights-with-queens-method" id="toc-derive-contiguity-weights-with-queens-method" class="nav-link" data-scroll-target="#derive-contiguity-weights-with-queens-method">Derive contiguity weights with Queen’s method</a></li>
   </ul></li>
-  <li><a href="#local-spatial-autocorrelation-analysis" id="toc-local-spatial-autocorrelation-analysis" class="nav-link" data-scroll-target="#local-spatial-autocorrelation-analysis">Local Spatial Autocorrelation Analysis</a></li>
+  <li><a href="#local-spatial-autocorrelation-analysis" id="toc-local-spatial-autocorrelation-analysis" class="nav-link" data-scroll-target="#local-spatial-autocorrelation-analysis">Local Spatial Autocorrelation Analysis</a>
+  <ul class="collapse">
+  <li><a href="#cluster-and-outlier-analysis" id="toc-cluster-and-outlier-analysis" class="nav-link" data-scroll-target="#cluster-and-outlier-analysis">Cluster and Outlier Analysis</a></li>
+  </ul></li>
   <li><a href="#emerging-hotspot-analysis" id="toc-emerging-hotspot-analysis" class="nav-link" data-scroll-target="#emerging-hotspot-analysis">Emerging Hotspot Analysis</a></li>
   </ul>
 </nav>
@@ -258,7 +261,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, tidyverse, tmap, sfdep)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, tidyverse, tmap, sfdep, stars)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>Load data in RDS format</p>
@@ -281,7 +284,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>tainan_dengue_sf <span class="ot">&lt;-</span> <span class="fu">left_join</span>(tainan, dengue, </span>
 <span id="cb3-2"><a href="#cb3-2"></a>                              <span class="at">by=</span> <span class="fu">join_by</span>(VILLNAME))</span>
-<span id="cb3-3"><a href="#cb3-3"></a>tainan_dengue_sf</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-3"><a href="#cb3-3"></a><span class="co"># tainan_dengue_grp_sf &lt;- tainan_dengue_sf %&gt;% </span></span>
+<span id="cb3-4"><a href="#cb3-4"></a><span class="co">#   group_by(VILLNAME) %&gt;% </span></span>
+<span id="cb3-5"><a href="#cb3-5"></a><span class="co">#   summarise(sum_num_dengue_cases = sum(num_dengue_cases))</span></span>
+<span id="cb3-6"><a href="#cb3-6"></a><span class="co"># tainan_dengue_grp_sf</span></span>
+<span id="cb3-7"><a href="#cb3-7"></a>tainan_dengue_sf</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Simple feature collection with 4500 features and 12 fields
@@ -325,21 +332,54 @@ First 10 features:
 10 POLYGON ((120.1176 23.08387...</code></pre>
 </div>
 </div>
+<p>This would be how the distribution of the dengue dataset</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>tmap mode set to plotting</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="fu">tm_shape</span>(tainan_dengue_sf <span class="sc">%&gt;%</span> </span>
+<span id="cb7-2"><a href="#cb7-2"></a>           <span class="fu">group_by</span>(VILLNAME) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-3"><a href="#cb7-3"></a>           <span class="fu">summarise</span>(<span class="at">cases =</span> <span class="fu">sum</span>(num_dengue_cases))) <span class="sc">+</span></span>
+<span id="cb7-4"><a href="#cb7-4"></a>  <span class="fu">tm_fill</span>(<span class="st">"cases"</span>, </span>
+<span id="cb7-5"><a href="#cb7-5"></a>          <span class="at">style =</span> <span class="st">"quantile"</span>, </span>
+<span id="cb7-6"><a href="#cb7-6"></a>          <span class="at">palette =</span> <span class="st">"Blues"</span>,</span>
+<span id="cb7-7"><a href="#cb7-7"></a>          <span class="at">title =</span> <span class="st">"Cases"</span>) <span class="sc">+</span></span>
+<span id="cb7-8"><a href="#cb7-8"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"Distribution of Dengue Cases by village, Tainan County"</span>,</span>
+<span id="cb7-9"><a href="#cb7-9"></a>            <span class="at">main.title.position =</span> <span class="st">"center"</span>,</span>
+<span id="cb7-10"><a href="#cb7-10"></a>            <span class="at">main.title.size =</span> <span class="fl">0.8</span>,</span>
+<span id="cb7-11"><a href="#cb7-11"></a>            <span class="at">legend.height =</span> <span class="fl">0.45</span>, </span>
+<span id="cb7-12"><a href="#cb7-12"></a>            <span class="at">legend.width =</span> <span class="fl">0.35</span>,</span>
+<span id="cb7-13"><a href="#cb7-13"></a>            <span class="at">frame =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb7-14"><a href="#cb7-14"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb7-15"><a href="#cb7-15"></a>  <span class="fu">tm_compass</span>(<span class="at">type=</span><span class="st">"8star"</span>, <span class="at">size =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex02_Part2_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 <p>Get neighbour list</p>
 <ul>
-<li><p><code>activate</code> will retrieve geometry column back (as spacetime object doesn’t show geomotry in tibble form</p></li>
-<li><p><code>mutate</code> create the <code>nb</code> and <code>wt</code> columns</p></li>
-<li><p><code>set_nbs</code> and <code>set_wts</code> to copy over to each time-slice (by epiweek in this exercise’s context)</p></li>
+<li><code>mutate</code> create the <code>nb</code> and <code>wt</code> columns</li>
 </ul>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>dengue_wm_q <span class="ot">&lt;-</span> tainan_dengue_sf <span class="sc">%&gt;%</span> </span>
-<span id="cb5-2"><a href="#cb5-2"></a>  <span class="fu">mutate</span>(<span class="at">nb =</span> <span class="fu">st_contiguity</span>(geometry),</span>
-<span id="cb5-3"><a href="#cb5-3"></a>         <span class="at">wt =</span> <span class="fu">st_weights</span>(nb,</span>
-<span id="cb5-4"><a href="#cb5-4"></a>                         <span class="at">style =</span> <span class="st">"W"</span>),</span>
-<span id="cb5-5"><a href="#cb5-5"></a>         <span class="at">.before =</span> <span class="dv">1</span>)</span>
-<span id="cb5-6"><a href="#cb5-6"></a>dengue_wm_q</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>dengue_wm_q <span class="ot">&lt;-</span> tainan_dengue_sf <span class="sc">%&gt;%</span> </span>
+<span id="cb8-2"><a href="#cb8-2"></a>  <span class="fu">mutate</span>(<span class="at">nb =</span> <span class="fu">st_contiguity</span>(geometry),</span>
+<span id="cb8-3"><a href="#cb8-3"></a>         <span class="at">wt =</span> <span class="fu">st_weights</span>(nb,</span>
+<span id="cb8-4"><a href="#cb8-4"></a>                         <span class="at">style =</span> <span class="st">"W"</span>),</span>
+<span id="cb8-5"><a href="#cb8-5"></a>         <span class="at">.before =</span> <span class="dv">1</span>)</span>
+<span id="cb8-6"><a href="#cb8-6"></a>dengue_wm_q</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Simple feature collection with 4500 features and 14 fields
@@ -405,15 +445,16 @@ First 10 features:
 10 POLYGON ((120.1176 23.08387...</code></pre>
 </div>
 </div>
-<p>Get Global G statistics</p>
+<p>Get Global Moran I statistics</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="fu">set.seed</span>(<span class="dv">1004</span>)</span>
-<span id="cb7-2"><a href="#cb7-2"></a><span class="fu">global_moran_perm</span>(dengue_wm_q<span class="sc">$</span>num_dengue_cases, </span>
-<span id="cb7-3"><a href="#cb7-3"></a>                  dengue_wm_q<span class="sc">$</span>nb,</span>
-<span id="cb7-4"><a href="#cb7-4"></a>                  dengue_wm_q<span class="sc">$</span>wt,</span>
-<span id="cb7-5"><a href="#cb7-5"></a>                  <span class="at">nsim =</span> <span class="dv">99</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="fu">set.seed</span>(<span class="dv">1004</span>)</span>
+<span id="cb10-2"><a href="#cb10-2"></a>global_m_perm <span class="ot">=</span> <span class="fu">global_moran_perm</span>(dengue_wm_q<span class="sc">$</span>num_dengue_cases, </span>
+<span id="cb10-3"><a href="#cb10-3"></a>                  dengue_wm_q<span class="sc">$</span>nb,</span>
+<span id="cb10-4"><a href="#cb10-4"></a>                  dengue_wm_q<span class="sc">$</span>wt,</span>
+<span id="cb10-5"><a href="#cb10-5"></a>                  <span class="at">nsim =</span> <span class="dv">99</span>)</span>
+<span id="cb10-6"><a href="#cb10-6"></a>global_m_perm</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>
@@ -428,13 +469,206 @@ alternative hypothesis: two.sided</code></pre>
 </div>
 </div>
 <p>The report above shows that the p-value is less than the alpha value of 0.05. We have sufficient statistical evidence to reject the null hypothesis that spatial distribution of dengue cases is random. Also as the Moran I statistics is greater than 0, the spatial distribution of dengue cases had shown sign of clustering.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="fu">hist</span>(global_m_perm<span class="sc">$</span>res,</span>
+<span id="cb12-2"><a href="#cb12-2"></a>     <span class="at">freq =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb12-3"><a href="#cb12-3"></a>     <span class="at">breaks =</span> <span class="dv">20</span>,</span>
+<span id="cb12-4"><a href="#cb12-4"></a>     <span class="at">xlab =</span> <span class="st">"Simulated Moran's I"</span>)</span>
+<span id="cb12-5"><a href="#cb12-5"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="dv">0</span>,</span>
+<span id="cb12-6"><a href="#cb12-6"></a>       <span class="at">col =</span> <span class="st">"red"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex02_Part2_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 </section>
 </section>
 <section id="local-spatial-autocorrelation-analysis" class="level1">
 <h1>Local Spatial Autocorrelation Analysis</h1>
+<section id="cluster-and-outlier-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="cluster-and-outlier-analysis">Cluster and Outlier Analysis</h2>
+<p>Get local Moran’s I statistics to</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a><span class="fu">set.seed</span>(<span class="dv">1003</span>)</span>
+<span id="cb13-2"><a href="#cb13-2"></a>lisa <span class="ot">&lt;-</span> dengue_wm_q <span class="sc">%&gt;%</span> </span>
+<span id="cb13-3"><a href="#cb13-3"></a>  <span class="fu">mutate</span>(<span class="at">local_moran =</span> <span class="fu">local_moran</span>(num_dengue_cases, nb, wt,</span>
+<span id="cb13-4"><a href="#cb13-4"></a>                                   <span class="at">nsim =</span> <span class="dv">199</span>),</span>
+<span id="cb13-5"><a href="#cb13-5"></a>         <span class="at">.before =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-6"><a href="#cb13-6"></a>  <span class="fu">unnest</span>(local_moran)</span>
+<span id="cb13-7"><a href="#cb13-7"></a><span class="fu">glimpse</span>(lisa)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 4,500
+Columns: 27
+$ ii               &lt;dbl&gt; 0.29488831, 0.29488831, 0.40429780, 0.40429780, 0.404…
+$ eii              &lt;dbl&gt; 5.545713e-03, -3.955986e-03, -1.712331e-03, 2.552024e…
+$ var_ii           &lt;dbl&gt; 0.0027765888, 0.0031276437, 0.0055156977, 0.006768213…
+$ z_ii             &lt;dbl&gt; 5.491065, 5.343630, 5.466843, 4.914020, 5.175360, 6.0…
+$ p_ii             &lt;dbl&gt; 3.995169e-08, 9.110368e-08, 4.581202e-08, 8.922757e-0…
+$ p_ii_sim         &lt;dbl&gt; 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,…
+$ p_folded_sim     &lt;dbl&gt; 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005, 0.00…
+$ skewness         &lt;dbl&gt; -0.19315267, -0.51281160, -0.26268657, -0.40516291, -…
+$ kurtosis         &lt;dbl&gt; 0.049194460, 0.330521763, 0.704702906, 0.079090693, 0…
+$ mean             &lt;fct&gt; Low-Low, Low-Low, Low-Low, Low-Low, Low-Low, Low-Low,…
+$ median           &lt;fct&gt; Low-Low, Low-Low, Low-Low, Low-Low, Low-Low, Low-Low,…
+$ pysal            &lt;fct&gt; Low-Low, Low-Low, Low-Low, Low-Low, Low-Low, Low-Low,…
+$ nb               &lt;nb&gt; &lt;2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1…
+$ wt               &lt;list&gt; &lt;0.01265823, 0.01265823, 0.01265823, 0.01265823, 0.0…
+$ VILLCODE         &lt;chr&gt; "67000350032", "67000350032", "67000350032", "6700035…
+$ COUNTYNAME       &lt;chr&gt; "臺南市", "臺南市", "臺南市", "臺南市", "臺南市", "臺…
+$ TOWNNAME         &lt;chr&gt; "安南區", "安南區", "安南區", "安南區", "安南區", "安…
+$ VILLNAME         &lt;chr&gt; "安南區_青草里", "安南區_青草里", "安南區_青草里", "…
+$ VILLENG          &lt;chr&gt; "Qingcao Vil.", "Qingcao Vil.", "Qingcao Vil.", "Qing…
+$ COUNTYID         &lt;chr&gt; "D", "D", "D", "D", "D", "D", "D", "D", "D", "D", "D"…
+$ COUNTYCODE       &lt;chr&gt; "67000", "67000", "67000", "67000", "67000", "67000",…
+$ TOWNID           &lt;chr&gt; "D06", "D06", "D06", "D06", "D06", "D06", "D06", "D06…
+$ TOWNCODE         &lt;chr&gt; "67000350", "67000350", "67000350", "67000350", "6700…
+$ NOTE             &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N…
+$ week             &lt;dbl&gt; 37, 41, 31, 32, 33, 34, 35, 36, 38, 39, 40, 42, 43, 4…
+$ num_dengue_cases &lt;int&gt; 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,…
+$ geometry         &lt;POLYGON [°]&gt; POLYGON ((120.1176 23.08387..., POLYGON ((120…</code></pre>
+</div>
+</div>
+<p>Look at the local Moran I statistics for each village. The graph supports our interpretation that the data is clustered.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>tmap mode set to plotting</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a>map1 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(lisa) <span class="sc">+</span></span>
+<span id="cb17-2"><a href="#cb17-2"></a>  <span class="fu">tm_fill</span>(<span class="at">col =</span> <span class="st">"p_ii"</span>,</span>
+<span id="cb17-3"><a href="#cb17-3"></a>          <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.001</span>, <span class="fl">0.01</span>, <span class="fl">0.05</span>, <span class="dv">1</span>),</span>
+<span id="cb17-4"><a href="#cb17-4"></a>          <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"0.001"</span>, <span class="st">"0.01"</span>, <span class="st">"0.05"</span>, <span class="st">"Not sig"</span>),</span>
+<span id="cb17-5"><a href="#cb17-5"></a>          <span class="at">palette =</span> <span class="st">"-YlOrBr"</span>,</span>
+<span id="cb17-6"><a href="#cb17-6"></a>          <span class="at">title =</span> <span class="st">"p-values"</span>) <span class="sc">+</span></span>
+<span id="cb17-7"><a href="#cb17-7"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb17-8"><a href="#cb17-8"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"p-value of local Moran's I"</span>,</span>
+<span id="cb17-9"><a href="#cb17-9"></a>            <span class="at">main.title.size =</span> <span class="fl">0.8</span>)</span>
+<span id="cb17-10"><a href="#cb17-10"></a></span>
+<span id="cb17-11"><a href="#cb17-11"></a>map2 <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(lisa) <span class="sc">+</span></span>
+<span id="cb17-12"><a href="#cb17-12"></a>  <span class="fu">tm_fill</span>(<span class="st">"ii"</span>) <span class="sc">+</span> </span>
+<span id="cb17-13"><a href="#cb17-13"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb17-14"><a href="#cb17-14"></a>  <span class="fu">tm_view</span>(<span class="at">set.zoom.limits =</span> <span class="fu">c</span>(<span class="dv">6</span>,<span class="dv">8</span>)) <span class="sc">+</span></span>
+<span id="cb17-15"><a href="#cb17-15"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"local Moran's I of GDPPC"</span>,</span>
+<span id="cb17-16"><a href="#cb17-16"></a>            <span class="at">main.title.size =</span> <span class="fl">0.8</span>)</span>
+<span id="cb17-17"><a href="#cb17-17"></a></span>
+<span id="cb17-18"><a href="#cb17-18"></a><span class="fu">tmap_arrange</span>(map1,map2,<span class="at">ncol =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Variable(s) "ii" contains positive and negative values, so midpoint is set to 0. Set midpoint = NA to show the full spectrum of the color palette.</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex02_Part2_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>We can see that both negative and positive local Moran’s I statistics values exist in the dataset.</p>
+<p>We now want to look at the local Moran’s I statistics for statistically important villages (where the p-value &lt; 0.05).</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>) <span class="sc">+</span></span>
+<span id="cb19-2"><a href="#cb19-2"></a>  <span class="fu">tm_shape</span>(lisa <span class="sc">%&gt;%</span> </span>
+<span id="cb19-3"><a href="#cb19-3"></a>             <span class="fu">relocate</span>(VILLNAME,</span>
+<span id="cb19-4"><a href="#cb19-4"></a>                      <span class="at">.before =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb19-5"><a href="#cb19-5"></a>             <span class="fu">filter</span>(p_ii <span class="sc">&lt;</span> <span class="fl">0.05</span>)) <span class="sc">+</span></span>
+<span id="cb19-6"><a href="#cb19-6"></a>  <span class="fu">tm_fill</span>(<span class="st">"ii"</span>) <span class="sc">+</span></span>
+<span id="cb19-7"><a href="#cb19-7"></a>  <span class="fu">tm_borders</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb19-8"><a href="#cb19-8"></a>  <span class="co"># tm_view(set.zoom.limits = c(6,8)) +</span></span>
+<span id="cb19-9"><a href="#cb19-9"></a>  <span class="fu">tm_layout</span>(<span class="at">main.title =</span> <span class="st">"p-values for Number of dengue cases in each village"</span>,</span>
+<span id="cb19-10"><a href="#cb19-10"></a>            <span class="at">main.title.size =</span> <span class="fl">0.8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>tmap mode set to plotting</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Variable(s) "ii" contains positive and negative values, so midpoint is set to 0. Set midpoint = NA to show the full spectrum of the color palette.</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Take-home_Ex02_Part2_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>From the above we can see that, the outlier exist around the centre of the Tainan county and the cluster lies nearer to the boundary of the Tainan county.</p>
+</section>
 </section>
 <section id="emerging-hotspot-analysis" class="level1">
 <h1>Emerging Hotspot Analysis</h1>
+<p>Now we want to know where are the hot and cold spots.</p>
+<p>Making use of the spacetime layer derived in <a href="Take-home_Ex/Take-home_Ex02/Take-home_Ex02_Part1.html">Part 1</a>, we calculate the contiguity weight matrix.</p>
+<p>Before starting work, we need to ensure that the layer is indeed a spacetime cube object.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a><span class="fu">is_spacetime_cube</span>(tainan_dengue)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1"></a>dengue_nb <span class="ot">&lt;-</span> tainan_dengue <span class="sc">%&gt;%</span></span>
+<span id="cb24-2"><a href="#cb24-2"></a>  <span class="fu">activate</span>(<span class="st">"geometry"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb24-3"><a href="#cb24-3"></a>  <span class="fu">mutate</span>(<span class="at">nb =</span> <span class="fu">include_self</span>(<span class="fu">st_contiguity</span>(geometry)),</span>
+<span id="cb24-4"><a href="#cb24-4"></a>         <span class="at">wt =</span> <span class="fu">st_inverse_distance</span>(nb, geometry,</span>
+<span id="cb24-5"><a href="#cb24-5"></a>                                  <span class="at">scale =</span> <span class="dv">1</span>,</span>
+<span id="cb24-6"><a href="#cb24-6"></a>                                  <span class="at">alpha =</span> <span class="dv">1</span>),</span>
+<span id="cb24-7"><a href="#cb24-7"></a>         <span class="at">.before =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb24-8"><a href="#cb24-8"></a>  <span class="fu">set_nbs</span>(<span class="st">"nb"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb24-9"><a href="#cb24-9"></a>  <span class="co"># complete_spacetime_cube() %&gt;% </span></span>
+<span id="cb24-10"><a href="#cb24-10"></a>  <span class="co"># set_wts("wt")</span></span>
+<span id="cb24-11"><a href="#cb24-11"></a></span>
+<span id="cb24-12"><a href="#cb24-12"></a><span class="fu">is_spacetime</span>(dengue_nb)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>! Polygon provided. Using point on surface.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: There was 1 warning in `stopifnot()`.
+ℹ In argument: `wt = st_inverse_distance(nb, geometry, scale = 1, alpha = 1)`.
+Caused by warning in `st_point_on_surface.sfc()`:
+! st_point_on_surface may not give correct results for longitude/latitude data</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1"></a><span class="fu">is_spacetime_cube</span>(dengue_nb)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] FALSE</code></pre>
+</div>
+</div>
+<p>Start computing the local Gi* for each village</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1"></a><span class="co"># gi_stars &lt;- dengue_nb %&gt;% </span></span>
+<span id="cb29-2"><a href="#cb29-2"></a><span class="co">#   group_by(week) %&gt;% </span></span>
+<span id="cb29-3"><a href="#cb29-3"></a><span class="co">#   mutate(gi_stars = local_gstar_perm(num_dengue_cases, nb , wt,</span></span>
+<span id="cb29-4"><a href="#cb29-4"></a><span class="co">#                                      nsim = 99)) %&gt;%</span></span>
+<span id="cb29-5"><a href="#cb29-5"></a><span class="co">#   unnest(gi_stars)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
 
 
 </section>
