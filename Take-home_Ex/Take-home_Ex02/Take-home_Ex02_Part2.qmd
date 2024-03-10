@@ -177,11 +177,9 @@ dengue_nb <- tainan_dengue %>%
                                   scale = 1,
                                   alpha = 1),
          .before = 1) %>% 
-  set_nbs("nb") %>% 
-  # complete_spacetime_cube() %>% 
+  set_nbs("nb")
   # set_wts("wt")
 
-is_spacetime(dengue_nb)
 is_spacetime_cube(dengue_nb)
 ```
 Start computing the local Gi* for each village

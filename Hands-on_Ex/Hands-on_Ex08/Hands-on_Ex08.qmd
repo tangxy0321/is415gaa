@@ -1,0 +1,310 @@
+---
+title: "Hands-on Excercise 8: Hedonic Pricing model with Geograpgically Weighted Regression"
+format: 
+  html: 
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: scroll
+    code-line-numbers: true
+    code-copy: hover
+execute: 
+  eval: true
+  echo: true
+  freeze: auto
+---
+
+```{r}
+pacman::p_load(sf, tidyverse,tmap,olsrr,corrplot,ggpubr,spdep,GWmodel,gtsummary)
+```
+
+# Import Data
+
+This exercise focuses on building a Hedonic pricing model on condo prices in 2015 with Geographically weighted model.
+
+# Geospatial Data Wrangling
+
+Through observation, the imported shapefile is not in the expected coordinate system - SVY21, need to apply `st_transform()` on the data to convert to the correct coordinate system.
+
+```{r}
+mpsz <- st_read(dsn = "../../data/geospatial",
+                layer = "MP14_SUBZONE_WEB_PL") %>% 
+  st_transform(3414)
+```
+
+```{r}
+st_crs(mpsz)
+```
+
+We can see the size of the boundary in terms of pixels using `st_bbox()`. It will return the size of the plot in Cartesean coordinates (which truly reflects that of Singapore).
+
+```{r}
+st_bbox(mpsz)
+```
+
+After we are done with pre-processing geospatial data, we need to import aspatial data used in this exercise, which is condo prices in 2015.
+
+```{r}
+condo_resale <- read_csv("../../data/aspatial/Condo_resale_2015.csv")
+glimpse(condo_resale)
+```
+
+```{r}
+head(condo_resale$LONGITUDE) #see the data in XCOORD column
+```
+
+```{r}
+head(condo_resale$LATITUDE) #see the data in YCOORD column
+```
+
+Summary statistics of condo resales prices in 2015
+
+```{r}
+summary(condo_resale)
+```
+
+The `condo_resale` is currently a tibble data.frame, convert to `sf` for easier future processing.
+
+```{r}
+condo_resale.sf <- st_as_sf(condo_resale,
+                            coords = c("LONGITUDE", "LATITUDE"),
+                            crs=4326) %>%
+  st_transform(crs=3414)
+head(condo_resale.sf)
+```
+
+# Exploratory Data analysis
+
+Look at distribution of selling price
+
+```{r}
+ggplot(data=condo_resale.sf, aes(x=`SELLING_PRICE`)) +
+  geom_histogram(bins=20, color="black", fill="light blue")
+```
+It's right-skewed, make that normal with log transformation.
+
+```{r}
+condo_resale.sf <- condo_resale.sf %>%
+  mutate(`LOG_SELLING_PRICE` = log(SELLING_PRICE))
+```
+
+Plot again to see if the skewed data is normalised. We can see that it's relatively less skewed.
+
+```{r}
+ggplot(data=condo_resale.sf, aes(x=`LOG_SELLING_PRICE`)) +
+  geom_histogram(bins=20, color="black", fill="light blue")
+```
+
+We want to look at the distribution of all the numeric continuous variables
+
+```{r}
+AREA_SQM <- ggplot(data=condo_resale.sf, aes(x= `AREA_SQM`)) + 
+  geom_histogram(bins=20, color="black", fill="light blue")
+
+AGE <- ggplot(data=condo_resale.sf, aes(x= `AGE`)) +
+  geom_histogram(bins=20, color="black", fill="light blue")
+
+PROX_CBD <- ggplot(data=condo_resale.sf, aes(x= `PROX_CBD`)) +
+  geom_histogram(bins=20, color="black", fill="light blue")
+
+PROX_CHILDCARE <- ggplot(data=condo_resale.sf, aes(x= `PROX_CHILDCARE`)) + 
+  geom_histogram(bins=20, color="black", fill="light blue")
+
+PROX_ELDERLYCARE <- ggplot(data=condo_resale.sf, aes(x= `PROX_ELDERLYCARE`)) +
+  geom_histogram(bins=20, color="black", fill="light blue")
+
+PROX_URA_GROWTH_AREA <- ggplot(data=condo_resale.sf, 
+                               aes(x= `PROX_URA_GROWTH_AREA`)) +
+  geom_histogram(bins=20, color="black", fill="light blue")
+
+PROX_HAWKER_MARKET <- ggplot(data=condo_resale.sf, aes(x= `PROX_HAWKER_MARKET`)) +
+  geom_histogram(bins=20, color="black", fill="light blue")
+
+PROX_KINDERGARTEN <- ggplot(data=condo_resale.sf, aes(x= `PROX_KINDERGARTEN`)) +
+  geom_histogram(bins=20, color="black", fill="light blue")
+
+PROX_MRT <- ggplot(data=condo_resale.sf, aes(x= `PROX_MRT`)) +
+  geom_histogram(bins=20, color="black", fill="light blue")
+
+PROX_PARK <- ggplot(data=condo_resale.sf, aes(x= `PROX_PARK`)) +
+  geom_histogram(bins=20, color="black", fill="light blue")
+
+PROX_PRIMARY_SCH <- ggplot(data=condo_resale.sf, aes(x= `PROX_PRIMARY_SCH`)) +
+  geom_histogram(bins=20, color="black", fill="light blue")
+
+PROX_TOP_PRIMARY_SCH <- ggplot(data=condo_resale.sf, 
+                               aes(x= `PROX_TOP_PRIMARY_SCH`)) +
+  geom_histogram(bins=20, color="black", fill="light blue")
+
+ggarrange(AREA_SQM, AGE, PROX_CBD, PROX_CHILDCARE, PROX_ELDERLYCARE, 
+          PROX_URA_GROWTH_AREA, PROX_HAWKER_MARKET, PROX_KINDERGARTEN, PROX_MRT,
+          PROX_PARK, PROX_PRIMARY_SCH, PROX_TOP_PRIMARY_SCH,  
+          ncol = 3, nrow = 4)
+```
+Look at the geospatial distribution of the condo prices
+
+```{r}
+tmap_mode("view")
+tmap_options(check.and.fix = TRUE)
+tm_shape(mpsz)+
+  tm_polygons()+
+tm_shape(condo_resale.sf)+
+  tm_dots(col = "SELLING_PRICE",
+          alpha = 0.6,
+          style="quantile")
+tm_view(set.zoom.limits = c(11,14))
+tmap_mode("plot")
+```
+
+# Hedonic Pricing Modelling with linear regression
+
+## Simple Linear regression - take in only 1 predictor
+
+Simple linear regression with selling price (y ie. outcome variable) against area (x ie independent predictor).
+
+```{r}
+condo.slr <- lm(formula=SELLING_PRICE ~ AREA_SQM, data = condo_resale.sf)
+summary(condo.slr)
+```
+The estimated equation is `SELLING_PRICE = -258121.1 + 14719 * AREA_SQM`
+
+R-squared of 0.4518 indicates that model built is able to explain about 45.18% of the resale prices.
+
+Since p-value is much smaller than 0.0001, we will reject the null hypothesis that mean is a good estimator of SELLING_PRICE. This will allow us to infer that simple linear regression model above is a good estimator of SELLING_PRICE.
+
+Let's see this in a scatter plot
+
+```{r}
+ggplot(data=condo_resale.sf,  
+       aes(x=`AREA_SQM`, y=`SELLING_PRICE`)) +
+  geom_point() +
+  geom_smooth(method = lm)
+```
+
+## Multivariate Linear Regression - take in > 1 predictors to predict price
+
+Before we use this model, we need to ensure that the assumptions for this model type is fulfilled to ensure that result estimated is truely reflective of what is presented in the data.
+
+We need to take note of
+
+- multicollinearity within predictor variables
+
+This can be investigated through correlation plot.
+
+```{r}
+corrplot(cor(condo_resale[, 5:23]), diag = FALSE, order = "AOE",
+         tl.pos = "td", tl.cex = 0.5, method = "number", type = "upper")
+```
+`FREEHOLD` highly correlated with `LEASE_99YEAR`, exclude `LEASE_99YEAR`
+
+```{r}
+condo.mlr <- lm(formula = SELLING_PRICE ~ AREA_SQM + AGE    + 
+                  PROX_CBD + PROX_CHILDCARE + PROX_ELDERLYCARE +
+                  PROX_URA_GROWTH_AREA + PROX_HAWKER_MARKET + PROX_KINDERGARTEN + 
+                  PROX_MRT  + PROX_PARK + PROX_PRIMARY_SCH + 
+                  PROX_TOP_PRIMARY_SCH + PROX_SHOPPING_MALL + PROX_SUPERMARKET + 
+                  PROX_BUS_STOP + NO_Of_UNITS + FAMILY_FRIENDLY + FREEHOLD, 
+                data=condo_resale.sf)
+summary(condo.mlr)
+```
+
+The estimated equation is `SELLING_PRICE = 481728.40 + 12708.32 * AREA_SQM - 24440.82 * AGE - 78669.78 * PROX_CBD - 351617.91 * PROX_CHILDCARE + 171029.42 * PROX_ELDERLYCARE + 38474.53 * PROX_URA_GROWTH_AREA + 23746.10 * PROX_HAWKER_MARKET + 147468.99 * PROX_KINDERGARTEN - 314599.68 * PROX_MRT + 563280.50 * PROX_PARK + 180186.08 * PROX_PRIMARY_SCH + 2280.04 * PROX_TOP_PRIMARY_SCH - 206604.06 * PROX_SHOPPING_MALL - 44991.80 * PROX_SUPERMARKET + 683121.35 * PROX_BUS_STOP - 231.18 * NO_Of_UNITS + 140340.77 * FAMILY_FRIENDLY + 359913.01 * FREEHOLD`
+
+R-squared of 0.6518 indicates that model built is able to explain about 65.18% of the resale prices.
+
+Since p-value is much smaller than 0.0001, we will reject the null hypothesis that mean is a good estimator of SELLING_PRICE. This will allow us to infer that multivariate linear regression model above is also another good estimator of SELLING_PRICE.
+
+# Publication Quality Table
+
+From the above, we only want to keep statistically significant predictor variables. 
+
+```{r}
+condo.mlr1 <- lm(formula = SELLING_PRICE ~ AREA_SQM + AGE + 
+                   PROX_CBD + PROX_CHILDCARE + PROX_ELDERLYCARE +
+                   PROX_URA_GROWTH_AREA + PROX_MRT  + PROX_PARK + 
+                   PROX_PRIMARY_SCH + PROX_SHOPPING_MALL    + PROX_BUS_STOP + 
+                   NO_Of_UNITS + FAMILY_FRIENDLY + FREEHOLD,
+                 data=condo_resale.sf)
+ols_regress(condo.mlr1)
+```
+
+There's another way to print this same table
+
+```{r}
+tbl_regression(condo.mlr1, intercept = TRUE)
+```
+
+When we want to include model statistics, we use this
+
+```{r}
+tbl_regression(condo.mlr1, 
+               intercept = TRUE) %>% 
+  add_glance_source_note(
+    label = list(sigma ~ "\U03C3"),
+    include = c(r.squared, adj.r.squared, 
+                AIC, statistic,
+                p.value, sigma))
+```
+
+# OLS regression
+
+This is making use of another package to help build linear regression models, `olsrr`
+
+Multicollinearity can be investigated using `ols_vif_tol()`
+
+Since the values < 10, we can safely assume no multicollinearity exist.
+
+```{r}
+ols_vif_tol(condo.mlr1)
+```
+Given that linear regression, as the name suggests, test for linear relationship between the variables and SELLING_PRICE. We also want to know if there is non-linear relationship between variables and SELLING_PRICE.
+
+Most of the data poitns are scattered around the 0 line, hence we can safely conclude that the relationships between the dependent variable and independent variables are linear
+
+```{r}
+ols_plot_resid_fit(condo.mlr1)
+```
+One of the assumptions of linear regression is the numeric continuous variables have normal distribution.
+
+Residual of the multiple linear regression model (i.e. condo.mlr1) is resemble normal distribution
+
+```{r}
+ols_plot_resid_hist(condo.mlr1)
+```
+
+This is the statistical way of testing for normality
+
+Values of the four tests are way smaller than the alpha value of 0.05. Hence we will reject the null hypothesis and infer that there is statistical evidence that the residual are not normally distributed.
+
+```{r}
+ols_test_normality(condo.mlr1)
+```
+The hedonic model we try to build are using geographically referenced attributes, hence it is also important for us to visualise the residual of the hedonic pricing model.
+
+```{r}
+ mlr.output <- as.data.frame(condo.mlr1$residuals)
+condo_resale.res.sf <- cbind(condo_resale.sf, 
+                        condo.mlr1$residuals) %>%
+  rename(`MLR_RES` = `condo.mlr1.residuals`)
+condo_resale.sp <- as_Spatial(condo_resale.res.sf)
+condo_resale.sp
+```
+Visualising using `tmap`
+
+Graph show signs of spatial autocorrelation.
+
+```{r}
+tmap_mode("view")
+tm_shape(mpsz)+
+  tmap_options(check.and.fix = TRUE) +
+  tm_polygons(alpha = 0.4) +
+tm_shape(condo_resale.res.sf) +  
+  tm_dots(col = "MLR_RES",
+          alpha = 0.6,
+          style="quantile") +
+  tm_view(set.zoom.limits = c(11,14))
+tmap_mode("plot")
+```
+
+
+
+
