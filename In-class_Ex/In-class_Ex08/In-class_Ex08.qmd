@@ -1,0 +1,44 @@
+---
+title: "In-class Excercise 8: Hedonic Pricing Model"
+format: 
+  html: 
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: scroll
+    code-line-numbers: true
+    code-copy: hover
+execute: 
+  eval: true
+  echo: true
+  freeze: auto
+---
+```{r}
+pacman::p_load(olsrr,ggstatsplot,sf,tidyverse,ggpubr,spdep,GWmodel,tmap)
+```
+
+# Import data
+
+The longitude and latitude in `condo_resale` dataset is in decimal degree, highly likely to adopt WGS84 coordinate system. When we convert `condo_resale` into `sf`, we first indicate that it is using coordinate system WGS84 (EPSG:4326), then project into Singapore coordinate system SVY21 (EPSG:3414).
+
+```{r}
+mpsz <- st_read(dsn = "../../data/geospatial",
+                layer = "MP14_SUBZONE_WEB_PL") %>% 
+  st_transform(3414)
+
+condo_resale <- read_csv("../../data/aspatial/Condo_resale_2015.csv")
+condo_resale.sf <- st_as_sf(condo_resale,
+                            coords = c("LONGITUDE","LATITUDE"),
+                            crs = 4326) %>% 
+  st_transform(3414)
+```
+
+# Exploratory Data Analysis
+
+## Visualising relationships 
+
+```{r}
+#| fig-width: 12
+#| fig-height: 10
+ggcorrmat(condo_resale[,5:23])
+```
+
