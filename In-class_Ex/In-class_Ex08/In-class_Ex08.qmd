@@ -13,7 +13,7 @@ execute:
   freeze: auto
 ---
 ```{r}
-pacman::p_load(olsrr,ggstatsplot,sf,tidyverse,ggpubr,spdep,GWmodel,tmap)
+pacman::p_load(olsrr,ggstatsplot,sf,tidyverse,ggpubr,spdep,GWmodel,tmap,gtsummary)
 ```
 
 # Import data
@@ -34,11 +34,185 @@ condo_resale.sf <- st_as_sf(condo_resale,
 
 # Exploratory Data Analysis
 
-## Visualising relationships 
+## Visualising relationships between variables
+
+This function `ggcorrmat()` from `ggstatsmodel` package provides information than the regular `corrmat()` used in Hands-on Excercise 8.
+
+This quick plot function will identify both significant and insignificant variables.
 
 ```{r}
 #| fig-width: 12
 #| fig-height: 10
 ggcorrmat(condo_resale[,5:23])
+```
+
+# Hedonic Pricing Model - Multivariate Linear regression
+
+When porting into Shiny app, the independent variables are to be joined with `+` instead of `,`.
+
+```{r}
+condo.mlr <- lm(formula = SELLING_PRICE ~ AREA_SQM + AGE    + 
+                  PROX_CBD + PROX_CHILDCARE + PROX_ELDERLYCARE +
+                  PROX_URA_GROWTH_AREA + PROX_HAWKER_MARKET + PROX_KINDERGARTEN + 
+                  PROX_MRT  + PROX_PARK + PROX_PRIMARY_SCH + 
+                  PROX_TOP_PRIMARY_SCH + PROX_SHOPPING_MALL + PROX_SUPERMARKET + 
+                  PROX_BUS_STOP + NO_Of_UNITS + FAMILY_FRIENDLY + FREEHOLD, 
+                data=condo_resale.sf)
+summary(condo.mlr)
+```
+
+
+The function `tbl_regression()` from `gtsummary` would create a tidy HTML summary table. In this excercise, we are including more model statistics into 
+
+```{r}
+# tbl_regression(condo.mlr,
+#                intercept = TRUE) %>% 
+#   add_glance_source_note(
+#     label = list(sigma ~ )
+#   )
+```
+
+## Visualising model parameter
+
+Use function `ggcoefstats()` from `ggstatsmodel`
+
+This includes beta, t statistics and p-value for each variable, while indicating confidence interval with mean in form of line with dot.
+
+When line/confidence interval is shorter, we are more confident (?)
+
+```{r}
+#| fig-height: 12
+mlr.p <- ggcoefstats(condo.mlr,
+                     sort = "ascending")
+mlr.p
+```
+
+## Fixed bandwidth 
+
+```{r}
+condo_resale.sp <- as_Spatial(condo_resale.sf)
+```
+
+
+```{r}
+bw.fixed <- bw.gwr(formula = SELLING_PRICE ~ AREA_SQM + AGE    + 
+                  PROX_CBD + PROX_CHILDCARE + PROX_ELDERLYCARE +
+                  PROX_URA_GROWTH_AREA + PROX_HAWKER_MARKET + PROX_KINDERGARTEN + 
+                  PROX_MRT  + PROX_PARK + PROX_PRIMARY_SCH + 
+                  PROX_TOP_PRIMARY_SCH + PROX_SHOPPING_MALL + PROX_SUPERMARKET + 
+                  PROX_BUS_STOP + NO_Of_UNITS + FAMILY_FRIENDLY + FREEHOLD, 
+                data=condo_resale.sp,
+                approach = "CV",
+                kernel = "gaussian",
+                adaptive = FALSE,
+                longlat = FALSE)
+```
+
+By default 2 models are built, one considering spatial relationship and the other without spatial relationship. Comparing the adjusted R-square (higher → better) to see if having spatial relationship will improve the model.
+
+Compare AICc for performance of individual madels (higher → better).
+
+```{r}
+gwr.fixed <- gwr.basic(formula = SELLING_PRICE ~ AREA_SQM + AGE    + 
+                  PROX_CBD + PROX_CHILDCARE + PROX_ELDERLYCARE +
+                  PROX_URA_GROWTH_AREA + PROX_HAWKER_MARKET + PROX_KINDERGARTEN + 
+                  PROX_MRT  + PROX_PARK + PROX_PRIMARY_SCH + 
+                  PROX_TOP_PRIMARY_SCH + PROX_SHOPPING_MALL + PROX_SUPERMARKET + 
+                  PROX_BUS_STOP + NO_Of_UNITS + FAMILY_FRIENDLY + FREEHOLD,
+                  data = condo_resale.sp,
+                  bw = bw.fixed,
+                  kernel = "gaussian",
+                  longlat = FALSE)
+gwr.fixed
+```
+
+## Adaptive
+
+```{r}
+bw.adaptive <- bw.gwr(formula = SELLING_PRICE ~ AREA_SQM + AGE  + 
+                        PROX_CBD + PROX_CHILDCARE + PROX_ELDERLYCARE    + 
+                        PROX_URA_GROWTH_AREA + PROX_MRT + PROX_PARK + 
+                        PROX_PRIMARY_SCH + PROX_SHOPPING_MALL   + PROX_BUS_STOP + 
+                        NO_Of_UNITS + FAMILY_FRIENDLY + FREEHOLD, 
+                      data=condo_resale.sp, 
+                      approach="CV", 
+                      kernel="gaussian", 
+                      adaptive=TRUE, 
+                      longlat=FALSE)
+```
+
+```{r}
+gwr.adaptive <- gwr.basic(formula = SELLING_PRICE ~ AREA_SQM + AGE + 
+                            PROX_CBD + PROX_CHILDCARE + PROX_ELDERLYCARE + 
+                            PROX_URA_GROWTH_AREA + PROX_MRT + PROX_PARK + 
+                            PROX_PRIMARY_SCH + PROX_SHOPPING_MALL + PROX_BUS_STOP + 
+                            NO_Of_UNITS + FAMILY_FRIENDLY + FREEHOLD, 
+                          data=condo_resale.sp, 
+                          bw=bw.adaptive, 
+                          kernel = 'gaussian', 
+                          adaptive=TRUE, 
+                          longlat = FALSE)
+gwr.adaptive
+```
+
+The SDF table stores all the model results (Standard Error SE, )
+
+```{r}
+condo_resale_sdf.adaptive <- st_as_sf(gwr.adaptive$SDF) %>% 
+  st_transform(crs = 3414)
+condo_resale_sdf.adaptive.svy21 <- st_transform(condo_resale_sdf.adaptive, crs = 3414)
+```
+
+## Visualise 
+
+```{r}
+tmap_options(check.and.fix = TRUE)
+tmap_mode("view")
+tm_shape(mpsz)+
+  tm_polygons(alpha = 0.1) +
+tm_shape(condo_resale_sdf.adaptive) +  
+  tm_dots(col = "Local_R2",
+          border.col = "gray60",
+          border.lwd = 1) +
+  tm_view(set.zoom.limits = c(11,14))
+```
+
+The `sync` parameter will synchronise the maps when one of them moved
+
+```{r}
+tmap_options(check.and.fix = TRUE)
+tmap_mode("view")
+AREA_SQM_SE <- tm_shape(mpsz)+
+  tm_polygons(alpha = 0.1) +
+tm_shape(condo_resale_sdf.adaptive) +  
+  tm_dots(col = "AREA_SQM_SE",
+          border.col = "gray60",
+          border.lwd = 1) +
+  tm_view(set.zoom.limits = c(11,14))
+
+AREA_SQM_TV <- tm_shape(mpsz)+
+  tm_polygons(alpha = 0.1) +
+tm_shape(condo_resale_sdf.adaptive) +  
+  tm_dots(col = "AREA_SQM_TV",
+          border.col = "gray60",
+          border.lwd = 1) +
+  tm_view(set.zoom.limits = c(11,14))
+
+tmap_arrange(AREA_SQM_SE, AREA_SQM_TV, 
+             asp=1, ncol=2,
+             sync = TRUE)
+tmap_mode("plot")
+```
+
+```{r}
+#| fig-height: 12
+#| fig-width: 10
+tm_shape(mpsz[mpsz$REGION_N=="CENTRAL REGION", ])+
+  tm_polygons()+
+tm_shape(condo_resale_sdf.adaptive) + 
+  tm_bubbles(col = "Local_R2",
+           size = 0.15,
+           border.col = "gray60",
+           border.lwd = 1)
 ```
 
