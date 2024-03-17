@@ -1,0 +1,296 @@
+---
+title: "Hands-on Excercise 9: Geographically Weighted Prediction Model"
+format: 
+  html: 
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: scroll
+    code-line-numbers: true
+    code-copy: hover
+execute: 
+  eval: true
+  echo: true
+  freeze: auto
+---
+
+```{r}
+pacman::p_load(sf, spdep, GWmodel, SpatialML, tmap, rsample, Metrics, tidyverse)
+```
+
+# Import Data
+
+Use the provided RDS file that contains information on amenities as follow:
+
+```{r}
+mdata <- read_rds("../../data/aspatial/mdata.rds")
+```
+
+## Data sampling -- Split data
+
+After splitting data with `initial_split()`
+
+```{r}
+set.seed(1234)
+resale_split <- initial_split(mdata, 
+                              prop = 6.5/10,)
+train_data <- training(resale_split)
+test_data <- testing(resale_split)
+```
+
+Store into RDS file for easy access
+
+```{r}
+#| eval: false
+write_rds(train_data, "../../data/aspatial/train_data.rds")
+write_rds(test_data, "../../data/aspatial/test_data.rds")
+```
+
+
+# Computing correlation matrix
+
+We see no value >= 0.8, indicating no multicollinearity between predictor varaibles
+
+```{r}
+#| fig-width: 12
+#| fig-height: 10
+#| eval: false
+mdata_nogeo <- mdata %>%
+  st_drop_geometry()
+corrplot::corrplot(cor(mdata_nogeo[, 2:17]), 
+                   diag = FALSE, 
+                   order = "AOE",
+                   tl.pos = "td", 
+                   tl.cex = 0.5, 
+                   method = "number", 
+                   type = "upper")
+```
+
+# Use the stored data to build non-spatial multiple linear regression
+
+```{r}
+train_data <- read_rds("../../data/aspatial/train_data.rds")
+test_data <- read_rds("../../data/aspatial/test_data.rds")
+
+price_mlr <- lm(resale_price ~ floor_area_sqm +
+                  storey_order + remaining_lease_mths +
+                  PROX_CBD + PROX_ELDERLYCARE + PROX_HAWKER +
+                  PROX_MRT + PROX_PARK + PROX_MALL + 
+                  PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN +
+                  WITHIN_350M_CHILDCARE + WITHIN_350M_BUS +
+                  WITHIN_1KM_PRISCH,
+                data=train_data)
+summary(price_mlr)
+```
+
+Save the trained model
+
+```{r}
+#| eval: false
+write_rds(price_mlr, "../../data/model/price_mlr.rds" ) 
+```
+
+# Prediction using GWR
+
+Convert `train_data` into `sp` object
+
+```{r}
+train_data_sp <- as_Spatial(train_data)
+train_data_sp
+```
+
+## Adaptive bandwidth GWR model
+
+Get the optimal number of member in bandwidth for adaptive bandwidth
+
+```{r}
+bw_adaptive <- bw.gwr(resale_price ~ floor_area_sqm +
+                  storey_order + remaining_lease_mths +
+                  PROX_CBD + PROX_ELDERLYCARE + PROX_HAWKER +
+                  PROX_MRT + PROX_PARK + PROX_MALL + 
+                  PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN +
+                  WITHIN_350M_CHILDCARE + WITHIN_350M_BUS +
+                  WITHIN_1KM_PRISCH,
+                  data=train_data_sp,
+                  approach="CV",
+                  kernel="gaussian",
+                  adaptive=TRUE,
+                  longlat=FALSE)
+```
+
+Save the optimal number of member (n = 40) in bandwidth into model folder
+
+```{r}
+#| eval: false
+write_rds(bw_adaptive, "../../data/model/bw_adaptive.rds")
+```
+
+Train model with saved member number
+
+```{r}
+bw_adaptive <- read_rds("../../data/model/bw_adaptive.rds")
+gwr_adaptive <- gwr.basic(formula = resale_price ~
+                            floor_area_sqm + storey_order +
+                            remaining_lease_mths + PROX_CBD + 
+                            PROX_ELDERLYCARE + PROX_HAWKER +
+                            PROX_MRT + PROX_PARK + PROX_MALL + 
+                            PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN +
+                            WITHIN_350M_CHILDCARE + WITHIN_350M_BUS +
+                            WITHIN_1KM_PRISCH,
+                          data=train_data_sp,
+                          bw=bw_adaptive, 
+                          kernel = 'gaussian', 
+                          adaptive=TRUE,
+                          longlat = FALSE)
+```
+
+Save trained model
+
+```{r}
+write_rds(gwr_adaptive, "../../data/model/gwr_adaptive.rds")
+```
+
+### Get output from model
+
+```{r}
+gwr_adaptive <- read_rds("../../data/model/gwr_adaptive.rds")
+gwr_adaptive
+```
+
+## Testing
+
+```{r}
+test_data_sp <- test_data %>%
+  as_Spatial()
+test_data_sp
+```
+
+Get optimal bandwdith (n = 25)
+
+```{r}
+gwr_bw_test_adaptive <- bw.gwr(resale_price ~ floor_area_sqm +
+                  storey_order + remaining_lease_mths +
+                  PROX_CBD + PROX_ELDERLYCARE + PROX_HAWKER +
+                  PROX_MRT + PROX_PARK + PROX_MALL + 
+                  PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN +
+                  WITHIN_350M_CHILDCARE + WITHIN_350M_BUS +
+                  WITHIN_1KM_PRISCH,
+                  data=test_data_sp,
+                  approach="CV",
+                  kernel="gaussian",
+                  adaptive=TRUE,
+                  longlat=FALSE)
+```
+
+Predict
+
+```{r}
+# gwr_pred <- gwr.predict(formula = resale_price ~
+#                           floor_area_sqm + storey_order +
+#                           remaining_lease_mths + PROX_CBD + 
+#                           PROX_ELDERLYCARE + PROX_HAWKER + 
+#                           PROX_MRT + PROX_PARK + PROX_MALL + 
+#                           PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN +
+#                           WITHIN_350M_CHILDCARE + WITHIN_350M_BUS + 
+#                           WITHIN_1KM_PRISCH, 
+#                         data = train_data_sp, 
+#                         predictdata = test_data_sp, 
+#                         bw = 40, 
+#                         kernel = 'gaussian', 
+#                         adaptive=TRUE, 
+#                         longlat = FALSE)
+```
+
+Get coordinates from test, train and full set
+
+```{r}
+coords <- st_coordinates(mdata)
+coords_train <- st_coordinates(train_data)
+coords_test <- st_coordinates(test_data)
+```
+
+drop geometry
+
+```{r}
+train_data <- train_data %>% 
+  st_drop_geometry()
+```
+
+## Random forest
+
+```{r}
+set.seed(1234)
+rf <- ranger(resale_price ~ floor_area_sqm + storey_order + 
+               remaining_lease_mths + PROX_CBD + PROX_ELDERLYCARE + 
+               PROX_HAWKER + PROX_MRT + PROX_PARK + PROX_MALL + 
+               PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN +
+               WITHIN_350M_CHILDCARE + WITHIN_350M_BUS + 
+               WITHIN_1KM_PRISCH,
+             data=train_data)
+rf
+```
+
+```{r}
+#| eval: false
+write_rds(rf, "../../data/model/rf.rds")
+```
+
+read back random forest model
+
+```{r}
+rf <- read_rds("../../data/model/rf.rds")
+rf
+```
+
+Calibrating random forest
+
+```{r}
+set.seed(1234)
+gwRF_adaptive <- grf(formula = resale_price ~ floor_area_sqm + storey_order +
+                       remaining_lease_mths + PROX_CBD + PROX_ELDERLYCARE +
+                       PROX_HAWKER + PROX_MRT + PROX_PARK + PROX_MALL +
+                       PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN +
+                       WITHIN_350M_CHILDCARE + WITHIN_350M_BUS +
+                       WITHIN_1KM_PRISCH,
+                     dframe=train_data, 
+                     bw=55,
+                     kernel="adaptive",
+                     coords=coords_train)
+```
+
+Predict
+
+```{r}
+test_data <- cbind(test_data, coords_test) %>%
+  st_drop_geometry()
+
+gwRF_pred <- predict.grf(gwRF_adaptive, 
+                           test_data, 
+                           x.var.name="X",
+                           y.var.name="Y", 
+                           local.w=1,
+                           global.w=0)
+```
+
+Convert output into dataframe
+
+```{r}
+GRF_pred_df <- as.data.frame(gwRF_pred)
+```
+
+Comparing predicted values and true y values -- calculate root mean squared error
+
+```{r}
+test_data_p <- cbind(test_data, GRF_pred_df)
+rmse(test_data_p$resale_price, 
+     test_data_p$GRF_pred)
+```
+
+Visualising the predicted values
+
+```{r}
+ggplot(data = test_data_p,
+       aes(x = gwRF_pred,
+           y = resale_price)) +
+  geom_point()
+```
+

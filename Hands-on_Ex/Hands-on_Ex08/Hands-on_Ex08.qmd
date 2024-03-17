@@ -1,5 +1,5 @@
 ---
-title: "Hands-on Excercise 8: Hedonic Pricing model with Geograpgically Weighted Regression"
+title: "Hands-on Exercise 8: Hedonic Pricing model with Geographically Weighted Regression"
 format: 
   html: 
     code-fold: true
