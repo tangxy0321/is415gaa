@@ -1,0 +1,277 @@
+---
+title: "In-class Exercise 9: Geographically Weighted Random Forest"
+format: 
+  html: 
+    code-fold: true
+    code-summary: "Show the code"
+    code-overflow: scroll
+    code-line-numbers: true
+    code-copy: hover
+execute: 
+  eval: true
+  echo: true
+  freeze: auto
+---
+
+`tidymodels` - community package that allows modelling to be done in R
+`rpart` - for recursive partitioning
+
+```{r}
+pacman::p_load(sf,spdep,GWmodel,SpatialML,tmap,tidymodels,tidyverse,gtsummary,rpart,rpart.plot,ggstatsplot,performance)
+```
+Import data prepared, `read_rds` gives `sf`
+
+```{r}
+rs_sf <- read_rds("../../data/rds_ex9/HDB_resale.rds")
+```
+
+-   function from `rsample` package (which also provides spatial sampling)
+-   defaults of `initial_split`
+    -   `strata = NULL` -> indicating random sampling
+-   `resale_split` records which records is put into train and test set each
+
+```{r}
+set.seed(1234)
+resale_split <- initial_split(
+  rs_sf,
+  prop = 5/10
+)
+train_sf <- training(resale_split)
+test_sf <- testing(resale_split)
+```
+
+Convert `train_sf` and `test_sf` into tibble data.frame
+
+-   Requirement od GRF - input numerical data.frame with at least 2 
+
+*No need to save, data prepared
+
+```{r}
+train_df <- train_sf %>% 
+  st_drop_geometry() %>% 
+  as.data.frame()
+
+test_df <- test_sf %>% 
+  st_drop_geometry() %>% 
+  as.data.frame()
+```
+
+Correlation plot for whole dataset
+
+```{r}
+#| fig-width: 12
+#| fig-height: 12
+rs_sf1 <- rs_sf %>% 
+  st_drop_geometry()
+ggcorrmat(rs_sf1[,2:17])
+```
+
+Revising mlr model
+
+-   `-c()` remove whatever column that is stated within ()
+
+```{r}
+train_df <- train_df %>% 
+  select(-c(PROX_CHAS))
+train_sf <- train_sf %>% 
+  select(-c(PROX_CHAS))
+test_df <- test_df %>% 
+  select(-c(PROX_CHAS))
+test_sf <- test_sf %>% 
+  select(-c(PROX_CHAS))
+```
+
+Train model with revised predictor list
+
+-   `rs_mlr` contains everything about the model
+
+```{r}
+rs_mlr <- lm(formula = RESALE_PRICE ~
+               FLOOR_AREA_SQM + STOREY_ORDER + REMAINING_LEASE_MTHS + PROX_CBD + PROX_ELDERLYCARE + PROX_HAWKER + 
+               PROX_MRT + PROX_PARK + PROX_GOOD_PRISCH + PROX_MALL + PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN + 
+               WITHIN_350M_CHILDCARE + WITHIN_350M_BUS + WITHIN_1KM_PRISCH,
+             data = train_df)
+```
+
+Extract x,y coordinates from full, train and test datasets
+
+-   in the formula of GRF, the calculation of bandwidth using grf.bw need to input coordinate as independent parameter (data.frame containing only coordinates)
+
+-   Unlike GWR which only needs `sp` object to understand
+
+```{r}
+coords <- st_coordinates(rs_sf)
+coords_train <- st_coordinates(train_sf)
+coords_test <- st_coordinates(test_sf)
+```
+
+Coordinates has been dropped, no need to repeatedly drop
+
+Build recursive partitioning
+
+-   the objects offers information 
+
+```{r}
+rs_rp <- rpart(
+  formula = RESALE_PRICE ~
+    FLOOR_AREA_SQM + STOREY_ORDER + REMAINING_LEASE_MTHS + PROX_CBD + PROX_ELDERLYCARE + PROX_HAWKER + 
+    PROX_MRT + PROX_PARK + PROX_GOOD_PRISCH + PROX_MALL + PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN + 
+    WITHIN_350M_CHILDCARE + WITHIN_350M_BUS + WITHIN_1KM_PRISCH,
+  data = train_df
+)
+rs_rp
+```
+
+Plot the splitting tree
+
+```{r}
+#| fig-width: 12
+#| fig-height: 7
+rpart.plot(rs_rp)
+```
+
+random forest
+
+There are many packages that can apply random forest, yet `ranger` is the preferred package
+
+-   Faster in general
+
+-   Importance: use this metrics to determine which variable to use (in this exercise we are using GINI aka 'impurity')
+
+```{r}
+set.seed(1234)
+rs_rf <- ranger(
+  formula = RESALE_PRICE ~
+    FLOOR_AREA_SQM + STOREY_ORDER + REMAINING_LEASE_MTHS + PROX_CBD + PROX_ELDERLYCARE + PROX_HAWKER + 
+    PROX_MRT + PROX_PARK + PROX_GOOD_PRISCH + PROX_MALL + PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN + 
+    WITHIN_350M_CHILDCARE + WITHIN_350M_BUS + WITHIN_1KM_PRISCH,
+  data = train_df,
+  importance = "impurity"
+)
+rs_rf
+```
+
+Extract out variable importance
+
+-   extract out row name to allow easier plotting as the plotting function would not be able to access rowname
+
+-   change the variable name to more intuitive
+
+```{r}
+vi <- as.data.frame(rs_rf$variable.importance)
+vi$variables <- rownames(vi)
+vi <- vi %>% 
+  rename(vi = "rs_rf$variable.importance")
+```
+
+Displaying the variable importance in form of bar chart
+
+-   `aes` state the x and y axis
+
+    -   y reordered variables based on vi column values (if not, chart will be displayed in alphabetical order by default)
+
+-   `geom_bar(stat = "identity")`: treat each row as individual record
+
+-   tell relative importance of variable; tell if model is working normally
+
+```{r}
+ggplot(data = vi,
+       aes(x = vi,
+           y = reorder(variables,vi))) +
+geom_bar(stat = "identity")
+```
+
+Find optimal bandwidth
+
+-   `bw.min` and `bw.max` - can help to speed up
+
+```{r}
+# set.seed((1234))
+# bw_grf <- grf.bw(formula = RESALE_PRICE ~
+#     FLOOR_AREA_SQM + STOREY_ORDER + REMAINING_LEASE_MTHS + PROX_CBD + PROX_ELDERLYCARE + PROX_HAWKER + 
+#     PROX_MRT + PROX_PARK + PROX_GOOD_PRISCH + PROX_MALL + PROX_SUPERMARKET + WITHIN_350M_KINDERGARTEN + 
+#     WITHIN_350M_CHILDCARE + WITHIN_350M_BUS + WITHIN_1KM_PRISCH,
+#     dataset = train_df,
+#     kernel = "adaptive",
+#     coords = coords_train,
+#     bw.min = 25,
+#     bw.max = 60,
+#     step = 1
+#     )
+```
+
+Prediction
+
+-   no need to drop geometry (done)
+
+```{r}
+# grf_pred <- predict.grf(rs_grf,
+#                         test_df,
+#                         x.var.name = "X",
+#                         y.var.name = "Y",
+#                         local.w = 1,
+#                         global.w = 0)
+```
+
+Convert the output into data.frame (output return in vector, which is harder to manipulate)
+
+```{r}
+grf_pred <- read_rds("../../data/models/grf_pred.rds")
+grf_pred_df <- as.data.frame(grf_pred)
+```
+
+Get a data.frame that contains both true and predicted values
+
+```{r}
+test_pred <- test_df %>% 
+  select(RESALE_PRICE) %>% 
+  cbind(grf_pred_df)
+```
+
+```{r}
+rf_pred <- predict(rs_rf, test_df)
+rf_pred_df <- as.data.frame(rf_pred$predictions) %>% 
+  rename(rf_pred = "rf_pred$predictions")
+```
+
+```{r}
+test_pred <- cbind(test_pred,
+                   rf_pred_df)
+```
+
+
+prepare final data table
+
+```{r}
+mlr_pred <- predict(rs_mlr, test_df)
+mlr_pred_df <- as.data.frame(mlr_pred) %>% 
+  rename(mlr_pred = "mlr_pred")
+```
+
+
+```{r}
+test_pred <- cbind(test_pred,
+                   mlr_pred_df)
+```
+
+
+
+```{r}
+yardstick::rmse(test_pred,
+                RESALE_PRICE,
+                mlr_pred)
+```
+
+```{r}
+mc <- test_pred %>% 
+  pivot_longer(cols = c(2:4),
+               names_to = "models",
+               values_to = "predicted")
+mc
+```
+
+
+
+
+
+
