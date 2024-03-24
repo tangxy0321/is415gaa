@@ -21,13 +21,12 @@ pacman::p_load(sf,tidyverse,spNetwork,tmap,classInt, viridis)
 
 ```{r}
 crime_data <- read_rds("../../data/proj_data/rds/accidents_thai.rds") %>% 
-  st_transform(crs = 4240)
+  st_transform(crs = 24047)
 thai_bound <- st_read(dsn = "../../data/proj_data/thai_adm_boundary",
                       layer = "tha_admbnda_adm1_rtsd_20220121") %>% 
-  st_transform(crs = 4240)
-# thai_bound <- read_rds("../../data/proj_data/rds/thai_boundary.rds")
+  st_transform(crs = 24047)
 thai_road <- read_rds("../../data/proj_data/rds/thai_roads.rds") %>% 
-  st_transform(crs = 4240)
+  st_transform(crs = 24047)
 ```
 
 
@@ -71,10 +70,24 @@ crime_data_filtered = crime_data %>%
 ### Get the portion of road network for the selected province
 
 
+
+
 ```{r}
-thai_prov <- filter(thai_bound, ADM1_EN == province_factor)
+thai_prov_sf <- thai_bound %>%
+  group_by(ADM1_EN) %>% 
+  summarise(geometry = st_union(geometry))
+
+thai_prov <- thai_prov_sf %>% 
+  filter(ADM1_EN == province_factor)
 road_prov <- st_intersection(thai_road, thai_prov)
-road_prov_sf <- st_cast(road_prov, "LINESTRING")
+```
+
+```{r}
+road_prov_sf <- st_cast(road_prov,"LINESTRING")
+```
+
+```{r}
+any(duplicated(road_prov_sf))
 ```
 
 
@@ -95,6 +108,10 @@ Likely to allow adjustment of kernel type, bandwidth set to be equivalent to `mi
 
 ```{r}
 samples <- lines_center(lixels)
+```
+
+```{r}
+
 densities <- nkde(road_prov_sf,
                   events = crime_data_filtered,
                   w = rep(1, nrow(crime_data_filtered)),
@@ -121,19 +138,20 @@ densities <- nkde(road_prov_sf,
 
 
 ```{r}
-# samples$density <- densities
-# lixels$density <- densities
-# 
-# samples$density <- samples$density*1000
-# lixels$density <- lixels$density*1000
+samples$density <- densities
+lixels$density <- densities
+
+samples$density <- samples$density*1000
+lixels$density <- lixels$density*1000
 ```
 
 ```{r}
-# tmap_mode('view')
-# tm_shape(lixels)+
-#   tm_lines(col="density")+
-# tm_shape(crime_data_filtered)+
-#   tm_dots()
+tmap_mode('view')
+tm_shape(lixels)+
+  tm_lines(col="density")+
+tm_shape(crime_data_filtered)+
+  tm_dots()
+tmap_mode('plot')
 ```
 
 
