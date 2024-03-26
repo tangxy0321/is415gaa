@@ -77,7 +77,7 @@ tmap_mode("plot")
 
 ```{r}
 thai_road <- thai_road %>%
-  filter(fclass %in% c("motorway","trunk","primary","secondary","tertiary"))
+  filter(fclass %in% c("motorway","primary","secondary","tertiary"))
 road_prov <- st_intersection(thai_road, thai_prov)
 ```
 
