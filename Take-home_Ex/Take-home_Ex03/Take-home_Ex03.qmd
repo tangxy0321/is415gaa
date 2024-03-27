@@ -24,7 +24,6 @@ crime_data <- read_rds("../../data/proj_data/rds/accidents_thai.rds") %>%
 thai_bound <- st_read(dsn = "../../data/proj_data/thai_adm_boundary",
                       layer = "tha_admbnda_adm2_rtsd_20220121") %>%
   st_transform(crs = 24047)
-
 thai_road <- read_rds("../../data/proj_data/rds/thai_roads.rds") %>% 
   st_transform(crs = 24047)
 ```
